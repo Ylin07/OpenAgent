@@ -1,0 +1,9 @@
+{
+  "name": "@openagent-ai/ui",
+  "version": "1.16.2",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./audio/*": "./src/assets/audio/*"
+  }
+}

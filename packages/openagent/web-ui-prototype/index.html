@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenAgent Web UI Prototype</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1110;
+        --surface: #111918;
+        --surface-2: #172220;
+        --surface-3: #1d2b28;
+        --line: #31423e;
+        --line-soft: #253530;
+        --text: #edf7f4;
+        --muted: #91a7a1;
+        --faint: #657a74;
+        --primary: #40d6b4;
+        --blue: #74a8ff;
+        --orange: #ffae62;
+        --red: #ff6f8a;
+        --green: #78db8f;
+        --purple: #c09cff;
+        --shadow: rgba(0, 0, 0, 0.35);
+        --radius: 6px;
+        --mono:
+          "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Roboto Mono", Consolas, "Liberation Mono", monospace;
+        --sans:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        overflow: hidden;
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      .app {
+        display: grid;
+        grid-template-rows: 44px 38px minmax(0, 1fr);
+        height: 100vh;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 18px;
+        background: #0e1514;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        font-weight: 700;
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid #2a5a50;
+        background: #14312c;
+        color: var(--primary);
+        border-radius: 4px;
+        font-family: var(--mono);
+      }
+
+      .crumbs,
+      .top-actions,
+      .muted {
+        color: var(--muted);
+      }
+
+      .crumbs {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: var(--mono);
+      }
+
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      .session-tabs {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 12px;
+        padding: 0 12px;
+        border-top: 1px solid #101b19;
+        border-bottom: 1px solid var(--line-soft);
+        background: #0d1413;
+      }
+
+      .tab-list {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .panel-title {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .session-tab {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-width: 170px;
+        max-width: 260px;
+        height: 32px;
+        padding: 0 10px 0 12px;
+        border: 1px solid transparent;
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .session-tab.active {
+        border-color: var(--line-soft);
+        background: var(--surface);
+        color: var(--text);
+      }
+
+      .tab-title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .tab-close {
+        color: var(--faint);
+        font-family: var(--mono);
+      }
+
+      .icon-btn {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .icon-btn:hover {
+        border-color: #3e7b70;
+        background: #14231f;
+        color: var(--text);
+      }
+
+      .tab-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .workspace,
+      .main {
+        display: grid;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .workspace {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .main {
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .dialogue-pane,
+      .execution {
+        display: grid;
+        grid-template-rows: 42px minmax(0, 1fr) auto;
+        min-height: 0;
+        background: #080d0c;
+        font-family: var(--mono);
+      }
+
+      .dialogue-pane {
+        border-right: 1px solid var(--line-soft);
+      }
+
+      .execution {
+        grid-template-rows: 42px minmax(0, 1fr);
+      }
+
+      .pane-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        min-height: 42px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line-soft);
+        background: #0b1211;
+      }
+
+      .title-block {
+        display: flex;
+        align-items: baseline;
+        min-width: 0;
+      }
+
+      .title-block h1 {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      .title-block p {
+        display: inline;
+        margin: 0 0 0 10px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .pane-stats {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .conversation {
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 16px 18px;
+        color: #dfe9e6;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .lane-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .lane-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line-soft);
+      }
+
+      .message {
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      .thinking {
+        margin: 6px 0 8px;
+        padding: 0 0 0 12px;
+        border-left: 2px solid var(--orange);
+        background: transparent;
+        color: #d4c4aa;
+        border-radius: 0;
+      }
+
+      .terminal-prompt,
+      .terminal-output,
+      .terminal-note {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .terminal-prompt {
+        color: var(--primary);
+      }
+
+      .terminal-prompt .muted,
+      .terminal-output .muted {
+        color: var(--muted);
+      }
+
+      .terminal-output {
+        color: var(--text);
+      }
+
+      .terminal-note {
+        color: var(--muted);
+      }
+
+      .terminal-table {
+        margin: 8px 0 0;
+        padding: 0 0 0 12px;
+        border-left: 2px solid var(--line);
+        color: #dfe9e6;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+      }
+
+      .execution-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 42px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line-soft);
+        background: #0b1211;
+      }
+
+      .terminal-status {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .terminal-stack {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .terminal-session {
+        display: grid;
+        grid-template-rows: 30px minmax(0, 1fr);
+        min-height: 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .terminal-session:last-child {
+        border-bottom: 0;
+      }
+
+      .terminal-titlebar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 12px;
+        border-bottom: 1px solid #16231f;
+        background: #0a100f;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .terminal-owner {
+        color: var(--orange);
+      }
+
+      .terminal-owner.user {
+        color: var(--blue);
+      }
+
+      .terminal-viewport {
+        min-height: 0;
+        overflow: auto;
+        padding: 10px 14px 14px;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .terminal-line {
+        display: block;
+        min-height: 1.55em;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .terminal-command {
+        color: var(--blue);
+      }
+
+      .terminal-success {
+        color: var(--green);
+      }
+
+      .terminal-muted {
+        color: var(--muted);
+      }
+
+      .terminal-output-block {
+        display: block;
+        margin: 3px 0 14px;
+        padding: 0 0 0 12px;
+        color: #dfe9e6;
+        border-left: 2px solid var(--line);
+        background: transparent;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+      }
+
+      .terminal-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--blue);
+      }
+
+      .terminal-cursor {
+        width: 8px;
+        height: 1.1em;
+        background: var(--primary);
+      }
+
+      .diff-add {
+        color: var(--green);
+      }
+
+      .diff-rem {
+        color: var(--red);
+      }
+
+      .composer {
+        display: grid;
+        gap: 0;
+        padding: 0;
+        border-top: 1px solid var(--line-soft);
+        background: #080d0c;
+        box-shadow: none;
+      }
+
+      .composer-shell {
+        display: grid;
+        grid-template-rows: auto minmax(48px, auto) auto;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      .composer-meta,
+      .composer-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 7px 12px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .composer-meta {
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .composer-foot {
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .mode {
+        color: var(--blue);
+      }
+
+      .variant {
+        color: var(--orange);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 52px;
+        resize: none;
+        border: 0;
+        outline: 0;
+        padding: 8px 12px 10px;
+        background: transparent;
+        color: var(--text);
+        font-family: var(--mono);
+        line-height: 1.55;
+      }
+
+      .kbd {
+        color: var(--text);
+      }
+
+      @media (max-width: 1200px) {
+        .content {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: minmax(0, 1fr) minmax(360px, 42vh);
+        }
+
+        .dialogue-pane,
+        .execution {
+          border-top: 1px solid var(--line-soft);
+          border-right: 0;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .topbar {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .crumbs {
+          display: none;
+        }
+
+        .session-tabs {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .session-tab {
+          min-width: 150px;
+        }
+
+        .pane-header {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .pane-stats,
+        .top-actions {
+          flex-wrap: wrap;
+        }
+
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">OC</div>
+          <span>OpenAgent</span>
+        </div>
+        <div class="crumbs">~/applications/openagent:dev</div>
+        <div class="top-actions">
+          <span><i class="dot"></i>synced</span>
+          <span>DeepSeek V4 Flash</span>
+        </div>
+      </header>
+
+      <nav class="session-tabs" aria-label="Sessions">
+        <div class="tab-list">
+          <button class="session-tab active" data-session="greeting">
+            <span class="tab-title">问候</span>
+            <span class="tab-close">&times;</span>
+          </button>
+          <button class="session-tab" data-session="review">
+            <span class="tab-title">Review prompt layout</span>
+            <span class="tab-close">&times;</span>
+          </button>
+          <button class="session-tab" data-session="diff">
+            <span class="tab-title">Patch split panes</span>
+            <span class="tab-close">&times;</span>
+          </button>
+        </div>
+        <div class="tab-actions">
+          <button class="icon-btn" aria-label="New session">+</button>
+        </div>
+      </nav>
+
+      <div class="workspace">
+        <main class="main">
+          <section class="content">
+            <section class="dialogue-pane" aria-label="AI conversation">
+              <header class="pane-header">
+                <div class="title-block">
+                  <h1>问候</h1>
+                  <p>DeepSeek · DeepSeek V4 Flash · medium</p>
+                </div>
+                <div class="pane-stats">
+                  <span><i class="dot"></i>idle</span>
+                  <span>7 messages</span>
+                  <span>12.6K tokens</span>
+                </div>
+              </header>
+
+              <div class="conversation">
+                <div class="lane-label">openagent://conversation split-1</div>
+
+                <article class="message">
+                  <span class="terminal-prompt">~/applications/openagent:dev $ ask 当前目录下有多少文件？</span>
+                </article>
+
+                <article class="message">
+                  <div class="thinking">
+                    <span class="terminal-note">trace 1.5s</span>
+                    <span class="terminal-note">  ls -a includes "." and ".."</span>
+                    <span class="terminal-note">  answer with raw entries and visible items</span>
+                  </div>
+                  <span class="terminal-output">assistant&gt; 当前目录统计</span>
+                  <span class="terminal-output">assistant&gt; 共有 13 个目录项；去掉 . 和 .. 后，实际可见文件/目录是 11 个。</span>
+                  <pre class="terminal-table">raw_entries     13
+visible_items   11
+source          shell count</pre>
+                </article>
+
+                <article class="message">
+                  <span class="terminal-prompt">~/applications/openagent:dev $ ask 把 AI 回答和思考过程放左边，执行命令放右边。</span>
+                </article>
+
+                <article class="message">
+                  <div class="thinking">
+                    <span class="terminal-note">trace layout</span>
+                    <span class="terminal-note">  keep natural-language output in split-1</span>
+                    <span class="terminal-note">  move tool calls and diffs to split-2</span>
+                  </div>
+                  <span class="terminal-output">assistant&gt; 可以。左侧保留自然语言和推理，右侧独立显示命令、文件读取、diff 和 patch。</span>
+                </article>
+              </div>
+
+              <section class="composer" aria-label="Prompt composer">
+                <div class="composer-shell">
+                  <div class="composer-meta">
+                    <span>~/applications/openagent:dev $ <span class="mode">ask</span></span>
+                    <span>12.6K · $0.01</span>
+                  </div>
+                  <textarea spellcheck="false">继续把执行命令放到右边，并保留左侧阅读流。</textarea>
+                  <div class="composer-foot">
+                    <span><span class="kbd">Tab</span> agents · <span class="kbd">Ctrl+P</span> commands</span>
+                    <span><span class="kbd">Enter</span> send</span>
+                  </div>
+                </div>
+              </section>
+            </section>
+
+            <aside class="execution" aria-label="Execution trace">
+              <div class="execution-toolbar">
+                <div class="panel-title">terminal://workspace split-2</div>
+                <div class="terminal-status">2 terminals · cwd synced</div>
+              </div>
+
+              <div class="terminal-stack">
+                <section class="terminal-session" aria-label="AI controlled terminal">
+                  <div class="terminal-titlebar">
+                    <span><span class="terminal-owner">AI</span> controlled</span>
+                    <span class="terminal-success">running on approval policy</span>
+                  </div>
+                  <div class="terminal-viewport">
+                    <span class="terminal-line terminal-command">$ ls -a</span>
+                    <pre class="terminal-output-block">.  ..  .git  .gitignore  bun.lock
+Makefile  node_modules  package.json
+packages  tsconfig.json  turbo.json</pre>
+                    <span class="terminal-line terminal-success">completed · 120ms</span>
+
+                    <span class="terminal-line terminal-command">$ ls -a | wc -l</span>
+                    <pre class="terminal-output-block">13</pre>
+                    <span class="terminal-line terminal-success">completed · 94ms</span>
+
+                    <span class="terminal-line terminal-command">$ apply_patch packages/openagent/web-ui-prototype/index.html</span>
+                    <pre class="terminal-output-block"><span class="diff-rem">- command cards and filters</span>
+<span class="diff-add">+ AI controlled terminal</span>
+<span class="diff-add">+ User controlled terminal</span></pre>
+                    <span class="terminal-line terminal-success">completed</span>
+                  </div>
+                </section>
+
+                <section class="terminal-session" aria-label="User controlled terminal">
+                  <div class="terminal-titlebar">
+                    <span><span class="terminal-owner user">User</span> controlled</span>
+                    <span class="terminal-muted">interactive pty</span>
+                  </div>
+                  <div class="terminal-viewport">
+                    <span class="terminal-line terminal-muted">~/applications/openagent:dev</span>
+                    <span class="terminal-line terminal-command">$ pwd</span>
+                    <pre class="terminal-output-block">/home/Ylin/applications/openagent</pre>
+                    <div class="terminal-input-row">
+                      <span>$</span>
+                      <span>git status --short</span>
+                      <span class="terminal-cursor" aria-hidden="true"></span>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </aside>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll(".session-tab").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".session-tab").forEach((item) => item.classList.remove("active"))
+          button.classList.add("active")
+        })
+      })
+    </script>
+  </body>
+</html>

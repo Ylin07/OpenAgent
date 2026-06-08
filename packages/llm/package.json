@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "version": "1.16.2",
+  "name": "@openagent-ai/llm",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./route": "./src/route/index.ts",
+    "./provider": "./src/provider.ts",
+    "./providers": "./src/providers/index.ts",
+    "./providers/openai-compatible": "./src/providers/openai-compatible.ts",
+    "./providers/openai-compatible-profile": "./src/providers/openai-compatible-profile.ts",
+    "./protocols": "./src/protocols/index.ts",
+    "./protocols/openai-chat": "./src/protocols/openai-chat.ts",
+    "./protocols/openai-compatible-chat": "./src/protocols/openai-compatible-chat.ts"
+  },
+  "devDependencies": {
+    "@clack/prompts": "1.0.0-alpha.1",
+    "@effect/platform-node": "catalog:",
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@typescript/native-preview": "catalog:"
+  },
+  "dependencies": {
+    "effect": "catalog:"
+  }
+}
