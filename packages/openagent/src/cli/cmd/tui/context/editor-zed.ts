@@ -4,6 +4,7 @@ import path from "node:path"
 import { Option, Schema } from "effect"
 import { Filesystem } from "@/util/filesystem"
 import type { EditorSelection } from "./editor"
+import { App } from "@openagent-ai/core/app"
 
 const ZedEditorRowSchema = Schema.Struct({
   item_kind: Schema.String,
@@ -187,7 +188,7 @@ function isZedActiveEditorRow(row: ZedEditorRow): row is ZedActiveEditorRow {
 
 export function resolveZedDbPath() {
   const candidates = [
-    process.env.OPENAGENT_ZED_DB,
+    App.env("OPENAGENT_ZED_DB"),
     path.join(os.homedir(), "Library", "Application Support", "Zed", "db", "0-stable", "db.sqlite"),
     path.join(os.homedir(), ".local", "share", "zed", "db", "0-stable", "db.sqlite"),
   ].filter((item): item is string => Boolean(item))

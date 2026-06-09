@@ -1,15 +1,16 @@
 import { Config, ConfigProvider, Context, Effect, Layer, Option } from "effect"
 import { ConfigService } from "@/effect/config-service"
+import { App } from "@openagent-ai/core/app"
 
-const bool = (name: string) => Config.boolean(name).pipe(Config.withDefault(false))
+const bool = (name: string) => Config.boolean(App.envName(name)).pipe(Config.withDefault(false))
 const positiveInteger = (name: string) =>
-  Config.number(name).pipe(
+  Config.number(App.envName(name)).pipe(
     Config.map((value) => (Number.isInteger(value) && value > 0 ? value : undefined)),
     Config.orElse(() => Config.succeed(undefined)),
   )
 const experimental = bool("OPENAGENT_EXPERIMENTAL")
 const enabledByExperimental = (name: string) =>
-  Config.all({ experimental, enabled: Config.boolean(name).pipe(Config.option) }).pipe(
+  Config.all({ experimental, enabled: Config.boolean(App.envName(name)).pipe(Config.option) }).pipe(
     Config.map((flags) => Option.getOrElse(flags.enabled, () => flags.experimental)),
   )
 
@@ -52,7 +53,7 @@ export class Service extends ConfigService.Service<Service>()("@openagent/Runtim
   bashDefaultTimeoutMs: positiveInteger("OPENAGENT_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS"),
   experimentalNativeLlm: bool("OPENAGENT_EXPERIMENTAL_NATIVE_LLM"),
   experimentalWebSockets: bool("OPENAGENT_EXPERIMENTAL_WEBSOCKETS"),
-  client: Config.string("OPENAGENT_CLIENT").pipe(Config.withDefault("cli")),
+  client: Config.string(App.envName("OPENAGENT_CLIENT")).pipe(Config.withDefault("cli")),
 }) {}
 
 export type Info = Context.Service.Shape<typeof Service>

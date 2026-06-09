@@ -13,6 +13,7 @@ import { NonNegativeInt } from "../schema"
 import * as Log from "../util/log"
 import { sanitizedProcessEnv } from "../util/openagent-process"
 import { which } from "../util/which"
+import { App } from "../app"
 
 const log = Log.create({ service: "ripgrep" })
 const VERSION = "15.1.0"
@@ -440,7 +441,7 @@ export const layer: Layer.Layer<Service, never, FSUtil.Service | ChildProcessSpa
 
         const root: Node = { name: "", children: new Map() }
         for (const file of list) {
-          if (file.includes(".openagent")) continue
+          if (file.includes(App.projectConfigDir)) continue
           const parts = file.split(path.sep)
           if (parts.length < 2) continue
           let node = root

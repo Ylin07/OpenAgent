@@ -31,6 +31,7 @@ import { PluginMeta } from "@/plugin/meta"
 import { installPlugin as installModulePlugin, patchPluginConfig, readPluginManifest } from "@/plugin/install"
 import { hasTheme, upsertTheme } from "../context/theme"
 import { Global } from "@openagent-ai/core/global"
+import { App } from "@openagent-ai/core/app"
 import { Filesystem } from "@/util/filesystem"
 import { Process } from "@/util/process"
 import { Flock } from "@openagent-ai/core/util/flock"
@@ -256,9 +257,9 @@ function createThemeInstaller(
     const name = path.basename(src, path.extname(src))
     const source_dir = path.dirname(meta.source)
     const local_dir =
-      path.basename(source_dir) === ".openagent"
+      path.basename(source_dir) === App.projectConfigDir
         ? path.join(source_dir, "themes")
-        : path.join(source_dir, ".openagent", "themes")
+        : path.join(source_dir, App.projectConfigDir, "themes")
     const dest_dir = meta.scope === "local" ? local_dir : path.join(Global.Path.config, "themes")
     const dest = path.join(dest_dir, `${name}.json`)
     const stat = await Filesystem.statAsync(src)
@@ -844,7 +845,7 @@ function defaultPluginOrigin(state: RuntimeState, spec: string): ConfigPlugin.Or
   return {
     spec,
     scope: "local",
-    source: state.api.state.path.config || path.join(state.directory, ".openagent", "tui.json"),
+    source: state.api.state.path.config || path.join(state.directory, App.projectConfigDir, "tui.json"),
   }
 }
 

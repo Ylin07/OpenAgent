@@ -12,6 +12,7 @@ import { makeRuntime } from "@openagent-ai/core/effect/runtime"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { EventV2 } from "@openagent-ai/core/event"
 import { SessionV2 } from "@openagent-ai/core/session"
+import { App } from "@openagent-ai/core/app"
 
 import { NotFoundError } from "@/storage/storage"
 import { eq } from "drizzle-orm"
@@ -376,7 +377,7 @@ export const Event = {
 
 export function plan(input: { slug: string; time: { created: number } }, instance: InstanceContext) {
   const base = instance.project.vcs
-    ? path.join(instance.worktree, ".openagent", "plans")
+    ? path.join(instance.worktree, App.projectConfigDir, "plans")
     : path.join(Global.Path.data, "plans")
   return path.join(base, [input.time.created, input.slug].join("-") + ".md")
 }

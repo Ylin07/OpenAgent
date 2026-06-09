@@ -13,6 +13,7 @@ import { errorMessage } from "./util/error"
 import { Heap } from "./cli/heap"
 import { ensureProcessMetadata } from "@openagent-ai/core/util/openagent-process"
 import { isRecord } from "@/util/record"
+import { App } from "@openagent-ai/core/app"
 
 const processMetadata = ensureProcessMetadata("main")
 
@@ -32,7 +33,7 @@ const args = hideBin(process.argv)
 
 function show(out: string) {
   const text = out.trimStart()
-  if (!text.startsWith("openagent ")) {
+  if (!text.startsWith(`${App.name} `)) {
     process.stderr.write(UI.logo() + EOL + EOL)
     process.stderr.write(text + EOL)
     return
@@ -42,7 +43,7 @@ function show(out: string) {
 
 const cli = yargs(args)
   .parserConfiguration({ "populate--": true })
-  .scriptName("openagent")
+  .scriptName(App.name)
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -63,7 +64,7 @@ const cli = yargs(args)
   })
   .middleware(async (opts) => {
     if (opts.pure) {
-      process.env.OPENAGENT_PURE = "1"
+      process.env[App.envName("OPENAGENT_PURE")] = "1"
     }
 
     await Log.init({
@@ -79,8 +80,8 @@ const cli = yargs(args)
     Heap.start()
 
     process.env.AGENT = "1"
-    process.env.OPENAGENT = "1"
-    process.env.OPENAGENT_PID = String(process.pid)
+    process.env[App.envName("OPENAGENT")] = "1"
+    process.env[App.envName("OPENAGENT_PID")] = String(process.pid)
 
     Log.Default.info("openagent", {
       version: InstallationVersion,

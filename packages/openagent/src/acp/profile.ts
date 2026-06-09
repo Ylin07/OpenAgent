@@ -1,4 +1,6 @@
-const enabled = process.env.OPENAGENT_ACP_PROFILE === "1"
+import { App } from "@openagent-ai/core/app"
+
+const enabled = App.env("OPENAGENT_ACP_PROFILE") === "1"
 const started = performance.now()
 
 export function mark(name: string, fields?: Record<string, string | number | boolean | undefined>) {

@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm"
 import { Effect, Semaphore } from "effect"
 import type { EffectDrizzleSqlite } from "@openagent-ai/effect-drizzle-sqlite"
 import { migrations } from "./migration.gen"
+import { App } from "../app"
 
 type Database = EffectDrizzleSqlite.EffectSQLiteDatabase
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0]
@@ -48,7 +49,7 @@ export function applyOnly(db: Database, input: Migration[]) {
       if (completed.has(migration.id)) continue
       yield* db.transaction((tx) =>
         Effect.gen(function* () {
-          if (!process.env.OPENAGENT_SKIP_MIGRATIONS) yield* migration.up(tx)
+          if (!App.env("OPENAGENT_SKIP_MIGRATIONS")) yield* migration.up(tx)
           yield* tx.run(
             sql`INSERT INTO ${sql.identifier("migration")} (id, time_completed) VALUES (${migration.id}, ${Date.now()})`,
           )

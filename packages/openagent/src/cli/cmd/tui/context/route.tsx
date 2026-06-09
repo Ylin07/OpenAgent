@@ -1,6 +1,7 @@
 import { createStore, reconcile } from "solid-js/store"
 import { createSimpleContext } from "./helper"
 import type { PromptInfo } from "../component/prompt/history"
+import { App } from "@openagent-ai/core/app"
 
 export type HomeRoute = {
   type: "home"
@@ -26,8 +27,8 @@ export const { use: useRoute, provider: RouteProvider } = createSimpleContext({
   init: (props: { initialRoute?: Route }) => {
     const [store, setStore] = createStore<Route>(
       props.initialRoute ??
-        (process.env["OPENAGENT_ROUTE"]
-          ? JSON.parse(process.env["OPENAGENT_ROUTE"])
+        (App.env("OPENAGENT_ROUTE")
+          ? JSON.parse(App.env("OPENAGENT_ROUTE")!)
           : {
               type: "home",
             }),

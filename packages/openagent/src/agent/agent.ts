@@ -26,6 +26,7 @@ import * as OtelTracer from "@effect/opentelemetry/Tracer"
 import { type DeepMutable } from "@openagent-ai/core/schema"
 import { ProviderV2 } from "@openagent-ai/core/provider"
 import { ModelV2 } from "@openagent-ai/core/model"
+import { App } from "@openagent-ai/core/app"
 
 export const Info = Schema.Struct({
   name: Schema.String,
@@ -154,7 +155,7 @@ export const layer = Layer.effect(
                 },
                 edit: {
                   "*": "deny",
-                  [path.join(".openagent", "plans", "*.md")]: "allow",
+                  [path.join(App.projectConfigDir, "plans", "*.md")]: "allow",
                   [path.relative(ctx.worktree, path.join(Global.Path.data, path.join("plans", "*.md")))]: "allow",
                 },
               }),

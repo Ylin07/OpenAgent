@@ -30,6 +30,7 @@ import { useArgs } from "./args"
 import { batch, onMount } from "solid-js"
 import * as Log from "@openagent-ai/core/util/log"
 import { emptyConsoleState, type ConsoleState } from "@openagent-ai/core/v1/config/console-state"
+import { App } from "@openagent-ai/core/app"
 import path from "path"
 import { useKV } from "./kv"
 import { aggregateFailures } from "./aggregate-failures"
@@ -518,7 +519,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         return store.status
       },
       get ready() {
-        if (process.env.OPENAGENT_FAST_BOOT) return true
+        if (App.env("OPENAGENT_FAST_BOOT")) return true
         return store.status !== "loading"
       },
       get path() {

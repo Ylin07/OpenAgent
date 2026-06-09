@@ -18,9 +18,10 @@ import { SessionShareTable } from "@openagent-ai/core/share/sql"
 import { ProviderV2 } from "@openagent-ai/core/provider"
 import { ModelV2 } from "@openagent-ai/core/model"
 import { EventV2 } from "@openagent-ai/core/event"
+import { App } from "@openagent-ai/core/app"
 
 const log = Log.create({ service: "share-next" })
-const disabled = process.env["OPENAGENT_DISABLE_SHARE"] === "true" || process.env["OPENAGENT_DISABLE_SHARE"] === "1"
+const disabled = App.env("OPENAGENT_DISABLE_SHARE") === "true" || App.env("OPENAGENT_DISABLE_SHARE") === "1"
 
 export type Api = {
   create: string

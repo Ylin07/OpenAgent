@@ -8,8 +8,16 @@ import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
 import { Skill } from "@/skill"
 
+const LANGUAGE_POLICY = [
+  "IMPORTANT LANGUAGE POLICY:",
+  "- Unless the user explicitly asks for another language, respond in Chinese (中文).",
+  "- If the model/provider exposes reasoning or thinking text in the UI, that text must also be Chinese.",
+  "- Do not organize reasoning in English when the user is using Chinese.",
+  "- Keep code, commands, paths, API names, library names, identifiers, and quoted error messages in their original language.",
+].join("\n")
+
 export function provider(_model: Provider.Model) {
-  return [PROMPT_DEFAULT]
+  return [LANGUAGE_POLICY, PROMPT_DEFAULT]
 }
 
 export interface Interface {
@@ -39,7 +47,7 @@ export const layer = Layer.effect(
             `  Today's date: ${new Date().toDateString()}`,
             `</env>`,
             `You are an interactive CLI tool that helps users with software engineering tasks. Use the instructions below and the tools available to you to assist the user.`,
-            `IMPORTANT: Always think and respond in Chinese (中文). Use Chinese for reasoning, explanations, and all communication with the user. Code and technical identifiers should remain in English.`,
+            LANGUAGE_POLICY,
           ].join("\n"),
         ]
       }),

@@ -17,6 +17,7 @@ ts-dist
 .serena/
 **/.omo
 .omo/
+.ctf/
 /result
 refs
 Session.vim

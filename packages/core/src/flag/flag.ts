@@ -1,14 +1,15 @@
 import { Config } from "effect"
+import { App } from "../app"
 
 export function truthy(key: string) {
-  const value = process.env[key]?.toLowerCase()
+  const value = App.env(key)?.toLowerCase()
   return value === "true" || value === "1"
 }
 
-const copy = process.env["OPENAGENT_EXPERIMENTAL_DISABLE_COPY_ON_SELECT"]
+const copy = App.env("OPENAGENT_EXPERIMENTAL_DISABLE_COPY_ON_SELECT")
 
 function enabledByExperimental(key: string) {
-  return process.env[key] === undefined ? truthy("OPENAGENT_EXPERIMENTAL") : truthy(key)
+  return App.env(key) === undefined ? truthy("OPENAGENT_EXPERIMENTAL") : truthy(key)
 }
 
 export const Flag = {
@@ -16,9 +17,9 @@ export const Flag = {
   OTEL_EXPORTER_OTLP_HEADERS: process.env["OTEL_EXPORTER_OTLP_HEADERS"],
 
   OPENAGENT_AUTO_HEAP_SNAPSHOT: truthy("OPENAGENT_AUTO_HEAP_SNAPSHOT"),
-  OPENAGENT_GIT_BASH_PATH: process.env["OPENAGENT_GIT_BASH_PATH"],
-  OPENAGENT_CONFIG: process.env["OPENAGENT_CONFIG"],
-  OPENAGENT_CONFIG_CONTENT: process.env["OPENAGENT_CONFIG_CONTENT"],
+  OPENAGENT_GIT_BASH_PATH: App.env("OPENAGENT_GIT_BASH_PATH"),
+  OPENAGENT_CONFIG: App.env("OPENAGENT_CONFIG"),
+  OPENAGENT_CONFIG_CONTENT: App.env("OPENAGENT_CONFIG_CONTENT"),
   OPENAGENT_DISABLE_AUTOUPDATE: truthy("OPENAGENT_DISABLE_AUTOUPDATE"),
   OPENAGENT_ALWAYS_NOTIFY_UPDATE: truthy("OPENAGENT_ALWAYS_NOTIFY_UPDATE"),
   OPENAGENT_DISABLE_PRUNE: truthy("OPENAGENT_DISABLE_PRUNE"),
@@ -27,24 +28,24 @@ export const Flag = {
   OPENAGENT_DISABLE_AUTOCOMPACT: truthy("OPENAGENT_DISABLE_AUTOCOMPACT"),
   OPENAGENT_DISABLE_MODELS_FETCH: truthy("OPENAGENT_DISABLE_MODELS_FETCH"),
   OPENAGENT_DISABLE_MOUSE: truthy("OPENAGENT_DISABLE_MOUSE"),
-  OPENAGENT_FAKE_VCS: process.env["OPENAGENT_FAKE_VCS"],
-  OPENAGENT_SERVER_PASSWORD: process.env["OPENAGENT_SERVER_PASSWORD"],
-  OPENAGENT_SERVER_USERNAME: process.env["OPENAGENT_SERVER_USERNAME"],
+  OPENAGENT_FAKE_VCS: App.env("OPENAGENT_FAKE_VCS"),
+  OPENAGENT_SERVER_PASSWORD: App.env("OPENAGENT_SERVER_PASSWORD"),
+  OPENAGENT_SERVER_USERNAME: App.env("OPENAGENT_SERVER_USERNAME"),
 
   // Experimental
-  OPENAGENT_EXPERIMENTAL_FILEWATCHER: Config.boolean("OPENAGENT_EXPERIMENTAL_FILEWATCHER").pipe(
+  OPENAGENT_EXPERIMENTAL_FILEWATCHER: Config.boolean(App.envName("OPENAGENT_EXPERIMENTAL_FILEWATCHER")).pipe(
     Config.withDefault(false),
   ),
-  OPENAGENT_EXPERIMENTAL_DISABLE_FILEWATCHER: Config.boolean("OPENAGENT_EXPERIMENTAL_DISABLE_FILEWATCHER").pipe(
-    Config.withDefault(false),
-  ),
+  OPENAGENT_EXPERIMENTAL_DISABLE_FILEWATCHER: Config.boolean(
+    App.envName("OPENAGENT_EXPERIMENTAL_DISABLE_FILEWATCHER"),
+  ).pipe(Config.withDefault(false)),
   OPENAGENT_EXPERIMENTAL_DISABLE_COPY_ON_SELECT:
     copy === undefined ? process.platform === "win32" : truthy("OPENAGENT_EXPERIMENTAL_DISABLE_COPY_ON_SELECT"),
-  OPENAGENT_MODELS_URL: process.env["OPENAGENT_MODELS_URL"],
-  OPENAGENT_MODELS_PATH: process.env["OPENAGENT_MODELS_PATH"],
-  OPENAGENT_DB: process.env["OPENAGENT_DB"],
+  OPENAGENT_MODELS_URL: App.env("OPENAGENT_MODELS_URL"),
+  OPENAGENT_MODELS_PATH: App.env("OPENAGENT_MODELS_PATH"),
+  OPENAGENT_DB: App.env("OPENAGENT_DB"),
 
-  OPENAGENT_WORKSPACE_ID: process.env["OPENAGENT_WORKSPACE_ID"],
+  OPENAGENT_WORKSPACE_ID: App.env("OPENAGENT_WORKSPACE_ID"),
   OPENAGENT_EXPERIMENTAL_WORKSPACES: enabledByExperimental("OPENAGENT_EXPERIMENTAL_WORKSPACES"),
   OPENAGENT_EXPERIMENTAL_SESSION_SWITCHER: enabledByExperimental("OPENAGENT_EXPERIMENTAL_SESSION_SWITCHER"),
 
@@ -57,21 +58,21 @@ export const Flag = {
     return enabledByExperimental("OPENAGENT_EXPERIMENTAL_REFERENCES")
   },
   get OPENAGENT_TUI_CONFIG() {
-    return process.env["OPENAGENT_TUI_CONFIG"]
+    return App.env("OPENAGENT_TUI_CONFIG")
   },
   get OPENAGENT_CONFIG_DIR() {
-    return process.env["OPENAGENT_CONFIG_DIR"]
+    return App.env("OPENAGENT_CONFIG_DIR")
   },
   get OPENAGENT_PURE() {
     return truthy("OPENAGENT_PURE")
   },
   get OPENAGENT_PERMISSION() {
-    return process.env["OPENAGENT_PERMISSION"]
+    return App.env("OPENAGENT_PERMISSION")
   },
   get OPENAGENT_PLUGIN_META_FILE() {
-    return process.env["OPENAGENT_PLUGIN_META_FILE"]
+    return App.env("OPENAGENT_PLUGIN_META_FILE")
   },
   get OPENAGENT_CLIENT() {
-    return process.env["OPENAGENT_CLIENT"] ?? "cli"
+    return App.env("OPENAGENT_CLIENT") ?? "cli"
   },
 }

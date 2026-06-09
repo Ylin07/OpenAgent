@@ -12,6 +12,7 @@ import { Global } from "@openagent-ai/core/global"
 import { Filesystem } from "@/util/filesystem"
 import { Flock } from "@openagent-ai/core/util/flock"
 import { isRecord } from "@/util/record"
+import { App } from "@openagent-ai/core/app"
 
 import { parsePluginSpecifier, readPackageThemes, readPluginPackage, resolvePluginTarget } from "./shared"
 
@@ -31,7 +32,7 @@ export type PatchDeps = {
   readText: (file: string) => Promise<string>
   write: (file: string, text: string) => Promise<void>
   exists: (file: string) => Promise<boolean>
-  files: (dir: string, name: "openagent" | "tui") => string[]
+  files: (dir: string, name: string) => string[]
 }
 
 export type PatchInput = {
@@ -334,11 +335,11 @@ function patchDir(input: PatchInput) {
   if (input.global) return input.config ?? Global.Path.config
   const git = input.vcs === "git" && input.worktree !== "/"
   const root = git ? input.worktree : input.directory
-  return path.join(root, ".openagent")
+  return path.join(root, App.projectConfigDir)
 }
 
-function patchName(kind: Kind): "openagent" | "tui" {
-  if (kind === "server") return "openagent"
+function patchName(kind: Kind): string {
+  if (kind === "server") return App.configName
   return "tui"
 }
 

@@ -25,15 +25,8 @@ const EXTERNAL_SKILL_PATTERN = "skills/**/SKILL.md"
 const OPENAGENT_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
 const SKILL_PATTERN = "**/SKILL.md"
 
-// Built-in skill that ships with openagent. The model's intuition for what an
-// openagent.json should look like is often wrong, and openagent hard-fails on
-// invalid config, so users hit cryptic startup errors. Loading this skill
-// when the model is asked to touch openagent's own config files gives it the
-// actual schemas instead of guesses.
-const CUSTOMIZE_OPENAGENT_SKILL_NAME = "customize-openagent"
-const CUSTOMIZE_OPENAGENT_SKILL_DESCRIPTION =
-  "Use ONLY when the user is editing or creating openagent's own configuration: openagent.json, openagent.jsonc, files under .openagent/, or files under ~/.config/openagent/. Also use when creating or fixing openagent agents, subagents, skills, plugins, MCP servers, or permission rules. Do not use for the user's own application code, or for any project that is not configuring openagent itself."
-const CUSTOMIZE_OPENAGENT_SKILL_BODY = SkillPlugin.CustomizeOpenAgentContent
+// Built-in skill for the current app's own config files. The model's
+// intuition for config shape is often wrong, and invalid config blocks startup.
 
 export const Info = Schema.Struct({
   name: Schema.String,
@@ -275,11 +268,11 @@ export const layer = Layer.effect(
         const s: State = { skills: {}, dirs: new Set() }
         // Register the built-in skill BEFORE disk discovery so a user-disk
         // skill with the same name can override it.
-        s.skills[CUSTOMIZE_OPENAGENT_SKILL_NAME] = {
-          name: CUSTOMIZE_OPENAGENT_SKILL_NAME,
-          description: CUSTOMIZE_OPENAGENT_SKILL_DESCRIPTION,
+        s.skills[SkillPlugin.CustomizeSkillName] = {
+          name: SkillPlugin.CustomizeSkillName,
+          description: SkillPlugin.CustomizeSkillDescription,
           location: "<built-in>",
-          content: CUSTOMIZE_OPENAGENT_SKILL_BODY,
+          content: SkillPlugin.CustomizeSkillContent,
         }
         yield* loadSkills(s, yield* InstanceState.get(discovered), events)
         return s

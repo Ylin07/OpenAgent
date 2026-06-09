@@ -33,6 +33,7 @@ import { ConfigPlugin } from "./plugin"
 import { ConfigVariable } from "./variable"
 import { Npm } from "@openagent-ai/core/npm"
 import { withTransientReadRetry } from "@/util/effect-http-client"
+import { App } from "@openagent-ai/core/app"
 
 const log = Log.create({ service: "config" })
 
@@ -138,7 +139,7 @@ export class Service extends Context.Service<Service, Interface>()("@openagent/C
 export const use = serviceUse(Service)
 
 function globalConfigFile() {
-  const candidates = ["openagent.jsonc", "openagent.json", "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
+  const candidates = [`${ConfigPaths.CONFIG_NAME}.jsonc`, `${ConfigPaths.CONFIG_NAME}.json`, "config.json"].map((file) =>
     path.join(Global.Path.config, file),
   )
   for (const file of candidates) {
@@ -248,8 +249,11 @@ export const layer = Layer.effect(
         }
       }
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json"), env))
-      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "openagent.json"), env))
-      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "openagent.jsonc"), env))
+      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, `${ConfigPaths.CONFIG_NAME}.json`), env))
+      result = mergeConfig(
+        result,
+        yield* loadFile(path.join(Global.Path.config, `${ConfigPaths.CONFIG_NAME}.jsonc`), env),
+      )
 
       const legacy = path.join(Global.Path.config, "config")
       if (existsSync(legacy)) {
@@ -313,7 +317,7 @@ export const layer = Layer.effect(
 
         const pluginScopeForSource = Effect.fnUntraced(function* (source: string) {
           if (source.startsWith("http://") || source.startsWith("https://")) return "global"
-          if (source === "OPENAGENT_CONFIG_CONTENT") return "local"
+          if (source.endsWith("_CONFIG_CONTENT")) return "local"
           if (containsPath(source, ctx)) return "local"
           return "global"
         })
@@ -395,7 +399,7 @@ export const layer = Layer.effect(
         }
 
         if (!Flag.OPENAGENT_DISABLE_PROJECT_CONFIG) {
-          for (const file of yield* ConfigPaths.files("openagent", ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
+          for (const file of yield* ConfigPaths.files(ConfigPaths.CONFIG_NAME, ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
             yield* merge(file, yield* loadFile(file, authEnv), "local")
           }
         }
@@ -413,8 +417,8 @@ export const layer = Layer.effect(
         const deps: Fiber.Fiber<void>[] = []
 
         for (const dir of directories) {
-          if (dir.endsWith(".openagent") || dir === Flag.OPENAGENT_CONFIG_DIR) {
-            for (const file of ["openagent.json", "openagent.jsonc"]) {
+          if (dir.endsWith(ConfigPaths.PROJECT_CONFIG_DIR) || dir === Flag.OPENAGENT_CONFIG_DIR) {
+            for (const file of [`${ConfigPaths.CONFIG_NAME}.json`, `${ConfigPaths.CONFIG_NAME}.jsonc`]) {
               const source = path.join(dir, file)
               log.debug(`loading config from ${source}`)
               yield* merge(source, yield* loadFile(source, authEnv))
@@ -452,15 +456,15 @@ export const layer = Layer.effect(
           result.command = mergeDeep(result.command ?? {}, yield* Effect.promise(() => ConfigCommand.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.loadMode(dir)))
-          // Auto-discovered plugins under `.openagent/plugin(s)` are already local files, so ConfigPlugin.load
+          // Auto-discovered plugins under app-specific project config directories are local files, so ConfigPlugin.load
           // returns normalized Specs and we only need to attach origin metadata here.
           const list = yield* Effect.promise(() => ConfigPlugin.load(dir))
           yield* mergePluginOrigins(dir, list)
         }
 
-        if (process.env.OPENAGENT_CONFIG_CONTENT) {
-          const source = "OPENAGENT_CONFIG_CONTENT"
-          const next = yield* loadConfig(process.env.OPENAGENT_CONFIG_CONTENT, {
+        if (Flag.OPENAGENT_CONFIG_CONTENT) {
+          const source = `${ConfigPaths.CONFIG_NAME.toUpperCase()}_CONFIG_CONTENT`
+          const next = yield* loadConfig(Flag.OPENAGENT_CONFIG_CONTENT, {
             dir: ctx.directory,
             source,
           })
@@ -481,8 +485,9 @@ export const layer = Layer.effect(
               { concurrency: 2 },
             )
             if (Option.isSome(tokenOpt)) {
-              process.env["OPENAGENT_CONSOLE_TOKEN"] = tokenOpt.value
-              yield* env.set("OPENAGENT_CONSOLE_TOKEN", tokenOpt.value)
+              const key = App.envName("OPENAGENT_CONSOLE_TOKEN")
+              process.env[key] = tokenOpt.value
+              yield* env.set(key, tokenOpt.value)
             }
 
             if (Option.isSome(configOpt)) {
@@ -509,7 +514,7 @@ export const layer = Layer.effect(
 
         const managedDir = ConfigManaged.managedConfigDir()
         if (existsSync(managedDir)) {
-          for (const file of ["openagent.json", "openagent.jsonc"]) {
+          for (const file of [`${ConfigPaths.CONFIG_NAME}.json`, `${ConfigPaths.CONFIG_NAME}.jsonc`]) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }

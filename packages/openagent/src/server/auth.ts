@@ -2,6 +2,7 @@ export * as ServerAuth from "./auth"
 
 import { ConfigService } from "@/effect/config-service"
 import { Flag } from "@openagent-ai/core/flag/flag"
+import { App } from "@openagent-ai/core/app"
 import { Config as EffectConfig, Context, Option, Redacted } from "effect"
 
 export type Credentials = {
@@ -15,8 +16,8 @@ export type DecodedCredentials = {
 }
 
 export class Config extends ConfigService.Service<Config>()("@openagent/ServerAuthConfig", {
-  password: EffectConfig.string("OPENAGENT_SERVER_PASSWORD").pipe(EffectConfig.option),
-  username: EffectConfig.string("OPENAGENT_SERVER_USERNAME").pipe(EffectConfig.withDefault("openagent")),
+  password: EffectConfig.string(App.envName("OPENAGENT_SERVER_PASSWORD")).pipe(EffectConfig.option),
+  username: EffectConfig.string(App.envName("OPENAGENT_SERVER_USERNAME")).pipe(EffectConfig.withDefault(App.name)),
 }) {}
 
 export type Info = Context.Service.Shape<typeof Config>

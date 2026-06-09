@@ -3,6 +3,7 @@ import { Effect, Layer, Record, Result, Schema, Context } from "effect"
 import { NonNegativeInt } from "@openagent-ai/core/schema"
 import { Global } from "@openagent-ai/core/global"
 import { FSUtil } from "@openagent-ai/core/fs-util"
+import { App } from "@openagent-ai/core/app"
 
 export const OAUTH_DUMMY_KEY = "openagent-oauth-dummy-key"
 
@@ -55,9 +56,10 @@ export const layer = Layer.effect(
     const decode = Schema.decodeUnknownOption(Info)
 
     const all = Effect.fn("Auth.all")(function* () {
-      if (process.env.OPENAGENT_AUTH_CONTENT) {
+      const authContent = App.env("OPENAGENT_AUTH_CONTENT")
+      if (authContent) {
         try {
-          return JSON.parse(process.env.OPENAGENT_AUTH_CONTENT)
+          return JSON.parse(authContent)
         } catch (err) {}
       }
 

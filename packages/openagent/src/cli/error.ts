@@ -1,4 +1,5 @@
 import { NamedError } from "@openagent-ai/core/util/error"
+import { App } from "@openagent-ai/core/app"
 import { errorFormat } from "@/util/error"
 import { isRecord } from "@/util/record"
 
@@ -65,7 +66,7 @@ export function FormatError(input: unknown): string | undefined {
       `Model not found: ${stringField(providerModelNotFound, "providerID")}/${stringField(providerModelNotFound, "modelID")}`,
       ...(suggestions.length ? ["Did you mean: " + suggestions.join(", ")] : []),
       `Try: \`openagent models\` to list available models`,
-      `Or check your config (openagent.json) provider/model names`,
+      `Or check your config (${App.configName}.json) provider/model names`,
     ].join("\n")
   }
 

@@ -5,6 +5,7 @@ import * as McpWebSearch from "./mcp-websearch"
 import DESCRIPTION from "./websearch.txt"
 import { checksum } from "@openagent-ai/core/util/encode"
 import { InstallationVersion } from "@openagent-ai/core/installation/version"
+import { App } from "@openagent-ai/core/app"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 
 export const Parameters = Schema.Struct({
@@ -28,7 +29,7 @@ const WebSearchProviderSchema = Schema.Literals(["exa", "parallel"])
 export type WebSearchProvider = Schema.Schema.Type<typeof WebSearchProviderSchema>
 
 export function selectWebSearchProvider(sessionID: string, flags = { exa: false, parallel: false }): WebSearchProvider {
-  const override = process.env.OPENAGENT_WEBSEARCH_PROVIDER
+  const override = App.env("OPENAGENT_WEBSEARCH_PROVIDER")
   if (override === "exa" || override === "parallel") return override
   if (flags.parallel) return "parallel"
   if (flags.exa) return "exa"

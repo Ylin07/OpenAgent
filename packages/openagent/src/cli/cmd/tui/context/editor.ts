@@ -7,6 +7,7 @@ import { Option, Schema, SchemaGetter } from "effect"
 import { isRecord } from "@/util/record"
 import { createSimpleContext } from "./helper"
 import { isZedTerminal, resolveZedDbPath, resolveZedSelection } from "./editor-zed"
+import { App } from "@openagent-ai/core/app"
 
 const MCP_PROTOCOL_VERSION = "2025-11-25"
 
@@ -364,7 +365,7 @@ function parsePort(value: string | undefined) {
 }
 
 function resolveEditorConnection(directory: string): EditorConnection | undefined {
-  const port = parsePort(process.env.CLAUDE_CODE_SSE_PORT || process.env.OPENAGENT_EDITOR_SSE_PORT)
+  const port = parsePort(process.env.CLAUDE_CODE_SSE_PORT || App.env("OPENAGENT_EDITOR_SSE_PORT"))
   if (port) {
     return {
       url: `ws://127.0.0.1:${port}`,

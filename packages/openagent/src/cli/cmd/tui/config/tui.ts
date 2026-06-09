@@ -118,7 +118,7 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
       const data = ConfigParse.jsonc(expanded, configFilepath)
       if (!isRecord(data)) return {} as Info
       // Flatten a nested "tui" key so users who wrote `{ "tui": { ... } }` inside tui.json
-      // (mirroring the old openagent.json shape) still get their settings applied.
+      // (mirroring the old app config shape) still get their settings applied.
       const normalized = dropUnknownKeybinds(normalize(data), configFilepath)
       const parsed = ConfigParse.schema(Info, normalized, configFilepath)
       const validated = parsed.attention?.sounds
@@ -189,7 +189,7 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
       acc.plugin_origins = plugins
     })
 
-  // Every config dir we may read from: global config dir, any `.openagent`
+  // Every config dir we may read from: global config dir, any app-specific
   // folders between cwd and home, and OPENAGENT_CONFIG_DIR.
   const directories = yield* ConfigPaths.directories(ctx.directory)
   yield* Effect.promise(() => migrateTuiConfig({ directories, cwd: ctx.directory }))
@@ -218,13 +218,15 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
     yield* mergeFile(acc, file)
   }
 
-  // 4. `.openagent` directories (and OPENAGENT_CONFIG_DIR) discovered while
+  // 4. App-specific project config directories (and OPENAGENT_CONFIG_DIR) discovered while
   // walking up the tree. Also returned below so callers can install plugin
   // dependencies from each location.
-  const dirs = unique(directories).filter((dir) => dir.endsWith(".openagent") || dir === Flag.OPENAGENT_CONFIG_DIR)
+  const dirs = unique(directories).filter(
+    (dir) => dir.endsWith(ConfigPaths.PROJECT_CONFIG_DIR) || dir === Flag.OPENAGENT_CONFIG_DIR,
+  )
 
   for (const dir of dirs) {
-    if (!dir.endsWith(".openagent") && dir !== Flag.OPENAGENT_CONFIG_DIR) continue
+    if (!dir.endsWith(ConfigPaths.PROJECT_CONFIG_DIR) && dir !== Flag.OPENAGENT_CONFIG_DIR) continue
     for (const file of ConfigPaths.fileInDirectory(dir, "tui")) {
       yield* mergeFile(acc, file)
     }

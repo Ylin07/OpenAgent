@@ -6,6 +6,10 @@ import { Global } from "@openagent-ai/core/global"
 import { unique } from "remeda"
 import * as Effect from "effect/Effect"
 import { FSUtil } from "@openagent-ai/core/fs-util"
+import { App } from "@openagent-ai/core/app"
+
+export const CONFIG_NAME = App.configName
+export const PROJECT_CONFIG_DIR = App.projectConfigDir
 
 export const files = Effect.fn("ConfigPaths.projectFiles")(function* (
   name: string,
@@ -26,13 +30,13 @@ export const directories = Effect.fn("ConfigPaths.directories")(function* (direc
     Global.Path.config,
     ...(!Flag.OPENAGENT_DISABLE_PROJECT_CONFIG
       ? yield* afs.up({
-          targets: [".openagent"],
+          targets: [PROJECT_CONFIG_DIR],
           start: directory,
           stop: worktree,
         })
       : []),
     ...(yield* afs.up({
-      targets: [".openagent"],
+      targets: [PROJECT_CONFIG_DIR],
       start: Global.Path.home,
       stop: Global.Path.home,
     })),

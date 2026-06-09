@@ -1,6 +1,7 @@
 import path from "path"
 import { fileURLToPath } from "url"
 import { Schema } from "effect"
+import { App } from "./app"
 
 type BaseReference = {
   readonly host: string
@@ -166,7 +167,7 @@ function withSlash(input: string) {
 }
 
 function githubRemote(pathname: string) {
-  const base = process.env.OPENAGENT_REPO_CLONE_GITHUB_BASE_URL
+  const base = App.env("OPENAGENT_REPO_CLONE_GITHUB_BASE_URL")
   if (!base) return `https://github.com/${pathname}.git`
   return new URL(`${pathname}.git`, withSlash(base)).href
 }

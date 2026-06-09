@@ -25,13 +25,13 @@ interface MigrateInput {
 }
 
 /**
- * Migrates tui-specific keys (theme, keybinds, tui) from openagent.json files
+ * Migrates tui-specific keys (theme, keybinds, tui) from the app config files
  * into dedicated tui.json files. Migration is performed per-directory and
  * skips only locations where a tui.json already exists.
  */
 export async function migrateTuiConfig(input: MigrateInput) {
-  const openagent = await openagentFiles(input)
-  for (const file of openagent) {
+  const configs = await appConfigFiles(input)
+  for (const file of configs) {
     const source = await Filesystem.readText(file).catch((error) => {
       log.warn("failed to read config for tui migration", { path: file, error })
       return undefined
@@ -134,13 +134,18 @@ async function backupAndStripLegacy(file: string, source: string) {
     })
 }
 
-async function openagentFiles(input: { directories: string[]; cwd: string }) {
+async function appConfigFiles(input: { directories: string[]; cwd: string }) {
   const files = [
-    ...ConfigPaths.fileInDirectory(Global.Path.config, "openagent"),
-    ...(await Filesystem.findUp(["openagent.json", "openagent.jsonc"], input.cwd, undefined, { rootFirst: true })),
+    ...ConfigPaths.fileInDirectory(Global.Path.config, ConfigPaths.CONFIG_NAME),
+    ...(await Filesystem.findUp(
+      [`${ConfigPaths.CONFIG_NAME}.json`, `${ConfigPaths.CONFIG_NAME}.jsonc`],
+      input.cwd,
+      undefined,
+      { rootFirst: true },
+    )),
   ]
   for (const dir of unique(input.directories)) {
-    files.push(...ConfigPaths.fileInDirectory(dir, "openagent"))
+    files.push(...ConfigPaths.fileInDirectory(dir, ConfigPaths.CONFIG_NAME))
   }
   if (Flag.OPENAGENT_CONFIG) files.push(Flag.OPENAGENT_CONFIG)
 

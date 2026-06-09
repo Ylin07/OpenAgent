@@ -2,6 +2,7 @@ import type { TuiPluginApi } from "@openagent-ai/plugin/tui"
 import { createMemo, For, type Accessor } from "solid-js"
 import { DEFAULT_THEMES, useTheme } from "@tui/context/theme"
 import { useCommandShortcut } from "../../keymap"
+import { App } from "@openagent-ai/core/app"
 
 const themeCount = Object.keys(DEFAULT_THEMES).length
 
@@ -210,17 +211,17 @@ const TIPS: Tip[] = [
     if (!items.length) return undefined
     return `Use ${items.map(shortcutText).join(" / ")} to move between parent and child sessions`
   },
-  "Create {highlight}openagent.json{/highlight} for server settings and {highlight}tui.json{/highlight} for TUI settings",
-  "Place TUI settings in {highlight}~/.config/openagent/tui.json{/highlight} for global config",
+  `Create {highlight}${App.configName}.json{/highlight} for server settings and {highlight}tui.json{/highlight} for TUI settings`,
+  `Place TUI settings in {highlight}~/.config/${App.name}/tui.json{/highlight} for global config`,
   "Add {highlight}$schema{/highlight} to your config for autocomplete in your editor",
   "Configure {highlight}model{/highlight} in config to set your default model",
   "Override any keybind in {highlight}tui.json{/highlight} via the {highlight}keybinds{/highlight} section",
   "Set any keybind to {highlight}none{/highlight} to disable it completely",
   "Configure local or remote MCP servers in the {highlight}mcp{/highlight} config section",
-  "Add {highlight}.md{/highlight} files to {highlight}.openagent/commands/{/highlight} to define reusable custom prompts",
+  `Add {highlight}.md{/highlight} files to {highlight}${App.projectConfigDir}/commands/{/highlight} to define reusable custom prompts`,
   "Use {highlight}$ARGUMENTS{/highlight}, {highlight}$1{/highlight}, {highlight}$2{/highlight} in custom commands for dynamic input",
   "Use backticks in commands to inject shell output (e.g., {highlight}`git status`{/highlight})",
-  "Add {highlight}.md{/highlight} files to {highlight}.openagent/agents/{/highlight} for specialized AI personas",
+  `Add {highlight}.md{/highlight} files to {highlight}${App.projectConfigDir}/agents/{/highlight} for specialized AI personas`,
   "Configure per-agent permissions for {highlight}edit{/highlight}, {highlight}bash{/highlight}, and {highlight}webfetch{/highlight} tools",
   'Use patterns like {highlight}"git *": "allow"{/highlight} for granular bash permissions',
   'Set {highlight}"rm -rf *": "deny"{/highlight} to block destructive commands',
@@ -229,9 +230,9 @@ const TIPS: Tip[] = [
   'Set {highlight}"formatter": false{/highlight} in config to disable formatters enabled by another config layer',
   "Define custom formatter commands with file extensions in config",
   'Set {highlight}"lsp": true{/highlight} in config to enable built-in LSP servers for code analysis',
-  "Create {highlight}.ts{/highlight} files in {highlight}.openagent/tools/{/highlight} to define new LLM tools",
+  `Create {highlight}.ts{/highlight} files in {highlight}${App.projectConfigDir}/tools/{/highlight} to define new LLM tools`,
   "Tool definitions can invoke scripts written in Python, Go, etc",
-  "Add {highlight}.ts{/highlight} files to {highlight}.openagent/plugins/{/highlight} for event hooks",
+  `Add {highlight}.ts{/highlight} files to {highlight}${App.projectConfigDir}/plugins/{/highlight} for event hooks`,
   "Use plugins to send OS notifications when sessions complete",
   "Create a plugin to prevent OpenAgent from reading sensitive files",
   "Use {highlight}openagent run{/highlight} for non-interactive scripting",
@@ -248,7 +249,7 @@ const TIPS: Tip[] = [
   "Comment {highlight}/openagent fix this{/highlight} on issues to auto-create PRs",
   "Comment {highlight}/oc{/highlight} on PR code lines for targeted code reviews",
   'Use {highlight}"theme": "system"{/highlight} to match your terminal\'s colors',
-  "Create JSON theme files in {highlight}.openagent/themes/{/highlight} directory",
+  `Create JSON theme files in {highlight}${App.projectConfigDir}/themes/{/highlight} directory`,
   "Themes support dark/light variants for both modes",
   "Use numeric xterm color codes 0-255 in custom theme JSON",
   "Use {highlight}{env:VAR_NAME}{/highlight} syntax to reference environment variables in config",

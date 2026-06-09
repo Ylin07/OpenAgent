@@ -8,6 +8,7 @@ import { Flag } from "../flag/flag"
 import { isAbsolute, join } from "path"
 import { DatabaseMigration } from "./migration"
 import { InstallationChannel } from "../installation/version"
+import { App } from "../app"
 
 const makeDatabase = EffectDrizzleSqlite.makeWithDefaults()
 type DatabaseShape = Effect.Success<typeof makeDatabase>
@@ -46,11 +47,11 @@ export function path() {
   }
   if (
     ["latest", "beta", "prod"].includes(InstallationChannel) ||
-    process.env.OPENAGENT_DISABLE_CHANNEL_DB === "1" ||
-    process.env.OPENAGENT_DISABLE_CHANNEL_DB === "true"
+    App.env("OPENAGENT_DISABLE_CHANNEL_DB") === "1" ||
+    App.env("OPENAGENT_DISABLE_CHANNEL_DB") === "true"
   )
-    return join(Global.Path.data, "openagent.db")
-  return join(Global.Path.data, `openagent-${InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-")}.db`)
+    return join(Global.Path.data, `${App.name}.db`)
+  return join(Global.Path.data, `${App.name}-${InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-")}.db`)
 }
 
 export const defaultLayer = Layer.unwrap(

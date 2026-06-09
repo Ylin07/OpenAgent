@@ -7,6 +7,7 @@ import { NonNegativeInt, withStatics } from "./schema"
 import { Global } from "./global"
 import { FSUtil } from "./fs-util"
 import { EventV2 } from "./event"
+import { App } from "./app"
 
 export const ID = Schema.String.pipe(
   Schema.brand("Auth.ID"),
@@ -147,12 +148,12 @@ export const layer = Layer.effect(
 
     const parseAuthContent = () => {
       try {
-        return JSON.parse(process.env.OPENAGENT_AUTH_CONTENT ?? "")
+        return JSON.parse(App.env("OPENAGENT_AUTH_CONTENT") ?? "")
       } catch {}
     }
 
     const load: () => Effect.Effect<Writable, Error> = Effect.fnUntraced(function* () {
-      if (process.env.OPENAGENT_AUTH_CONTENT) {
+      if (App.env("OPENAGENT_AUTH_CONTENT")) {
         const raw = parseAuthContent()
         if (raw && typeof raw === "object") {
           if ("version" in raw && raw.version === 2) return raw as Writable

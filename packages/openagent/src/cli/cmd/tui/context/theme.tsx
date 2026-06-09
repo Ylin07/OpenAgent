@@ -40,6 +40,7 @@ import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
 import { createStore, produce } from "solid-js/store"
 import { Global } from "@openagent-ai/core/global"
+import { App } from "@openagent-ai/core/app"
 import { Filesystem } from "@/util/filesystem"
 import { useTuiConfig } from "./tui-config"
 import { isRecord } from "@/util/record"
@@ -543,7 +544,7 @@ async function getCustomThemes() {
     Global.Path.config,
     ...(await Array.fromAsync(
       Filesystem.up({
-        targets: [".openagent"],
+        targets: [App.projectConfigDir],
         start: process.cwd(),
       }),
     )),

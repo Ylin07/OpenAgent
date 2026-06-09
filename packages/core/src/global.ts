@@ -1,28 +1,16 @@
 import path from "path"
 import fs from "fs/promises"
-import fsSync from "fs"
 import { xdgData, xdgCache, xdgConfig, xdgState } from "xdg-basedir"
 import os from "os"
 import { Context, Effect, Layer } from "effect"
 import { Flock } from "./util/flock"
-import { Flag } from "./flag/flag"
+import { App } from "./app"
 
-const app = "openagent"
-const legacy = "opencode"
-
-// backward compat: map all OPENCODE_* env vars to OPENAGENT_*
-for (const key of Object.keys(process.env)) {
-  if (key.startsWith("OPENCODE_")) {
-    const target = "OPENAGENT_" + key.slice(8)
-    if (!process.env[target]) process.env[target] = process.env[key]
-  }
-}
+const app = App.name
 
 function resolve(dirFn: string | undefined | null, base: string) {
   if (!dirFn) return path.join(os.homedir(), ".local", "share", app, base)
-  const newPath = path.join(dirFn, app)
-  const oldPath = path.join(dirFn, legacy)
-  return fsSync.existsSync(oldPath) ? oldPath : newPath
+  return path.join(dirFn, app)
 }
 
 const data = resolve(xdgData, "")
@@ -33,7 +21,7 @@ const tmp = path.join(os.tmpdir(), app)
 
 const paths = {
   get home() {
-    return process.env.OPENAGENT_TEST_HOME ?? os.homedir()
+    return App.env("OPENAGENT_TEST_HOME") ?? os.homedir()
   },
   data,
   bin: path.join(cache, "bin"),
@@ -78,7 +66,7 @@ export function make(input: Partial<Interface> = {}): Interface {
     home: Path.home,
     data: Path.data,
     cache: Path.cache,
-    config: Flag.OPENAGENT_CONFIG_DIR ?? Path.config,
+    config: App.env("OPENAGENT_CONFIG_DIR") ?? Path.config,
     state: Path.state,
     tmp: Path.tmp,
     bin: Path.bin,
