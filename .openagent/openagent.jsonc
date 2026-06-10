@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openagent.ai/config.json",
+  "skills": {
+    "paths": [".openagent/skills"]
+  },
+  "permission": {
+    "external_directory": {
+      "~/.config/openagent/docs/*": "allow"
+    }
+  },
+  "tool_output": {
+    "max_lines": 2500,
+    "max_bytes": 80000
+  }
+}
