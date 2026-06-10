@@ -7,6 +7,8 @@
   "private": true,
   "scripts": {
     "typecheck": "tsgo --noEmit",
+    "test": "bun test src",
+    "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml src",
     "build": "bun run script/build.ts",
     "dev": "bun run --conditions=browser ./src/index.ts"
   },
@@ -24,7 +26,6 @@
     }
   },
   "devDependencies": {
-    "@babel/core": "7.28.4",
     "@octokit/webhooks-types": "7.6.1",
     "@openagent-ai/core": "workspace:*",
     "@standard-schema/spec": "1.0.0",
@@ -41,8 +42,7 @@
     "drizzle-orm": "catalog:",
     "prettier": "3.6.2",
     "typescript": "catalog:",
-    "vscode-languageserver-types": "3.17.5",
-    "why-is-node-running": "3.2.2"
+    "vscode-languageserver-types": "3.17.5"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "0.21.0",

@@ -8,8 +8,11 @@
       "dependsOn": [],
       "outputs": ["dist/**"]
     },
+    "test": {
+      "outputs": [],
+      "passThroughEnv": ["*"]
+    },
     "openagent#test": {
-      "dependsOn": ["^build"],
       "outputs": [],
       "passThroughEnv": ["*"]
     },
@@ -18,7 +21,6 @@
       "passThroughEnv": ["*"]
     },
     "openagent#test:ci": {
-      "dependsOn": ["^build"],
       "outputs": [".artifacts/unit/junit.xml"],
       "passThroughEnv": ["*"]
     },

@@ -2,10 +2,8 @@ import { Config } from "@/config/config"
 import { SessionV1 } from "@openagent-ai/core/v1/session"
 import type { MessageV2 } from "@/session/message-v2"
 import * as Log from "@openagent-ai/core/util/log"
-import photonWasm from "@silvia-odwyer/photon-node/photon_rs_bg.wasm" with { type: "file" }
 import { Context, Effect, Layer, Schema } from "effect"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
+import { createRequire } from "node:module"
 
 const MAX_BASE64_BYTES = 5 * 1024 * 1024
 const MAX_WIDTH = 2000
@@ -13,6 +11,14 @@ const MAX_HEIGHT = 2000
 const AUTO_RESIZE = true
 const JPEG_QUALITIES = [80, 85, 70, 55, 40]
 const log = Log.create({ service: "image" })
+const require = createRequire(import.meta.url)
+const PHOTON_NODE_PACKAGE = "@silvia-odwyer/photon-node"
+const PHOTON_WASM_PACKAGE = `${PHOTON_NODE_PACKAGE}/photon_rs_bg.wasm`
+type PhotonModule = typeof import("@silvia-odwyer/photon-node")
+
+function resolvePhotonWasm() {
+  return require.resolve(PHOTON_WASM_PACKAGE)
+}
 
 export class ResizerUnavailableError extends Schema.TaggedErrorClass<ResizerUnavailableError>()(
   "ImageResizerUnavailableError",
@@ -63,12 +69,16 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const config = yield* Config.Service
     const loadPhoton = yield* Effect.cached(
-      Effect.sync(() => {
-        // Patched photon-node reads this during module init so Bun compiled binaries use the embedded wasm path.
-        ;(globalThis as typeof globalThis & { __OPENAGENT_PHOTON_WASM_PATH?: string }).__OPENAGENT_PHOTON_WASM_PATH =
-          path.isAbsolute(photonWasm) ? photonWasm : fileURLToPath(new URL(photonWasm, import.meta.url))
+      Effect.try({
+        try: () => {
+          // Patched photon-node reads this during module init. Resolve it lazily so compiled binaries do not embed
+          // the optional image-resizer wasm unless the runtime package is available.
+          ;(globalThis as typeof globalThis & { __OPENAGENT_PHOTON_WASM_PATH?: string }).__OPENAGENT_PHOTON_WASM_PATH =
+            resolvePhotonWasm()
+        },
+        catch: (error) => error,
       }).pipe(
-        Effect.andThen(() => Effect.tryPromise(() => import("@silvia-odwyer/photon-node"))),
+        Effect.andThen(() => Effect.tryPromise(() => import(PHOTON_NODE_PACKAGE) as Promise<PhotonModule>)),
         Effect.tapError((error) => Effect.sync(() => log.warn("failed to load photon", { error }))),
         Effect.mapError(() => new ResizerUnavailableError()),
       ),
