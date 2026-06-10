@@ -1,8 +1,8 @@
-- Fast content search tool that works with any codebase size
-- Searches file contents using regular expressions
-- Supports full regex syntax (eg. "log.*Error", "function\s+\w+", etc.)
-- Filter files by pattern with the include parameter (eg. "*.js", "*.{ts,tsx}")
-- Returns file paths and line numbers with at least one match sorted by modification time
-- Use this tool when you need to find files containing specific patterns
-- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.
-- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead
+- 快速内容搜索工具，适用于任意规模的代码库
+- 使用 regular expressions 搜索文件内容
+- 支持完整 regex 语法（例如 "log.*Error"、"function\s+\w+" 等）
+- 使用 include 参数按 pattern 过滤文件（例如 "*.js"、"*.{ts,tsx}"）
+- 返回至少有一个匹配项的文件路径和行号，并按修改时间排序
+- 当需要查找包含特定 patterns 的文件时使用此工具
+- 如果需要识别或统计文件内匹配项数量，请直接用 Bash 工具运行 `rg` (ripgrep)。不要使用 `grep`。
+- 进行开放式搜索且可能需要多轮 glob 和 grep 时，改用 Task 工具

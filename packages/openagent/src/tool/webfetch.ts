@@ -11,14 +11,14 @@ const DEFAULT_TIMEOUT = 30 * 1000 // 30 seconds
 const MAX_TIMEOUT = 120 * 1000 // 2 minutes
 
 export const Parameters = Schema.Struct({
-  url: Schema.String.annotate({ description: "The URL to fetch content from" }),
+  url: Schema.String.annotate({ description: "要获取内容的 URL" }),
   format: Schema.Literals(["text", "markdown", "html"])
     .annotate({
-      description: "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+      description: "返回内容的格式（text、markdown 或 html）。默认为 markdown。",
       default: "markdown",
     })
     .pipe(Schema.withDecodingDefault(Effect.succeed("markdown" as const))),
-  timeout: Schema.optional(Schema.Number).annotate({ description: "Optional timeout in seconds (max 120)" }),
+  timeout: Schema.optional(Schema.Number).annotate({ description: "可选 timeout，单位为 seconds（最大 120）" }),
 })
 
 export const WebFetchTool = Tool.define(
@@ -111,7 +111,7 @@ export const WebFetchTool = Tool.define(
             const base64Content = Buffer.from(arrayBuffer).toString("base64")
             return {
               title,
-              output: "Image fetched successfully",
+              output: "图片获取成功",
               metadata: {},
               attachments: [
                 {

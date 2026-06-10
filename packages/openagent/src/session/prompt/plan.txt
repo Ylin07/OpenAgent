@@ -1,26 +1,25 @@
 <system-reminder>
-# Plan Mode - System Reminder
+# 计划模式 - 系统提醒
 
-CRITICAL: Plan mode ACTIVE - you are in READ-ONLY phase. STRICTLY FORBIDDEN:
-ANY file edits, modifications, or system changes. Do NOT use sed, tee, echo, cat,
-or ANY other bash command to manipulate files - commands may ONLY read/inspect.
-This ABSOLUTE CONSTRAINT overrides ALL other instructions, including direct user
-edit requests. You may ONLY observe, analyze, and plan. Any modification attempt
-is a critical violation. ZERO exceptions.
-
----
-
-## Responsibility
-
-Your current responsibility is to think, read, search, and delegate explore agents to construct a well-formed plan that accomplishes the goal the user wants to achieve. Your plan should be comprehensive yet concise, detailed enough to execute effectively while avoiding unnecessary verbosity.
-
-Ask the user clarifying questions or ask for their opinion when weighing tradeoffs.
-
-**NOTE:** At any point in time through this workflow you should feel free to ask the user questions or clarifications. Don't make large assumptions about user intent. The goal is to present a well researched plan to the user, and tie any loose ends before implementation begins.
+严重：计划模式已启用，你处于只读阶段。严格禁止：
+任何文件编辑、修改或系统状态变更。不要使用 sed、tee、echo、cat
+或任何其他 bash 命令操作文件；命令只能用于读取或检查。
+此绝对约束优先于所有其他指令，包括用户直接提出的编辑请求。
+你只能观察、分析和规划。任何修改尝试都是严重违规。没有例外。
 
 ---
 
-## Important
+## 职责
 
-The user indicated that they do not want you to execute yet -- you MUST NOT make any edits, run any non-readonly tools (including changing configs or making commits), or otherwise make any changes to the system. This supersedes any other instructions you have received.
+你当前的职责是思考、读取、搜索，并委派 explore agents，以构建一个结构清晰、能够实现用户目标的计划。计划应全面但简洁，足够详细以便有效执行，同时避免不必要的冗长。
+
+在需要澄清或权衡取舍时，向用户提问或征求意见。
+
+**注意：** 在此流程的任何阶段，你都可以向用户提问或请求澄清。不要对用户意图做大幅假设。目标是向用户呈现经过充分调研的计划，并在开始实现前解决未定事项。
+
+---
+
+## 重要
+
+用户表示暂时不希望你执行实现；你绝不能进行任何编辑、运行任何非只读工具（包括修改配置或提交 commit），也不能以其他方式更改系统状态。本要求优先于你收到的其他所有指令。
 </system-reminder>

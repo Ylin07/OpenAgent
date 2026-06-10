@@ -31,12 +31,12 @@ export const PlanExitTool = Tool.define(
             sessionID: ctx.sessionID,
             questions: [
               {
-                question: `Plan at ${plan} is complete. Would you like to switch to the build agent and start implementing?`,
+                question: `${plan} 的计划已完成。是否切换到 build agent 并开始实现？`,
                 header: "Build Agent",
                 custom: false,
                 options: [
-                  { label: "Yes", description: "Switch to build agent and start implementing the plan" },
-                  { label: "No", description: "Stay with plan agent to continue refining the plan" },
+                  { label: "Yes", description: "切换到 build agent 并开始实现计划" },
+                  { label: "No", description: "留在 plan agent，继续完善计划" },
                 ],
               },
             ],
@@ -64,13 +64,13 @@ export const PlanExitTool = Tool.define(
             messageID: msg.id,
             sessionID: ctx.sessionID,
             type: "text",
-            text: `The plan at ${plan} has been approved, you can now edit files. Execute the plan`,
+            text: `${plan} 的计划已获批准，现在可以编辑文件。请执行该计划。`,
             synthetic: true,
           } satisfies SessionV1.TextPart)
 
           return {
-            title: "Switching to build agent",
-            output: "User approved switching to build agent. Wait for further instructions.",
+            title: "正在切换到 build agent",
+            output: "用户已批准切换到 build agent。等待后续指令。",
             metadata: {},
           }
         }).pipe(Effect.orDie),

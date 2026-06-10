@@ -8,10 +8,10 @@ const PS = new Set(["powershell", "pwsh"])
 const CMD = new Set(["cmd"])
 
 const descriptions = {
-  bash: "Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
+  bash: "用 5-10 个词清楚简洁地描述此命令的作用。示例：\n输入：ls\n输出：列出当前目录文件\n\n输入：git status\n输出：显示工作树状态\n\n输入：npm install\n输出：安装包依赖\n\n输入：mkdir foo\n输出：创建目录 'foo'",
   powershell:
-    'Clear, concise description of what this command does in 5-10 words. Examples:\nInput: Get-ChildItem -LiteralPath "."\nOutput: Lists current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: New-Item -ItemType Directory -Path "tmp"\nOutput: Creates directory tmp',
-  cmd: 'Clear, concise description of what this command does in 5-10 words. Examples:\nInput: dir\nOutput: Lists current directory\n\nInput: if exist "package.json" type "package.json"\nOutput: Prints package.json when it exists\n\nInput: mkdir tmp\nOutput: Creates directory tmp',
+    '用 5-10 个词清楚简洁地描述此命令的作用。示例：\n输入：Get-ChildItem -LiteralPath "."\n输出：列出当前目录\n\n输入：git status\n输出：显示工作树状态\n\n输入：npm install\n输出：安装包依赖\n\n输入：New-Item -ItemType Directory -Path "tmp"\n输出：创建目录 tmp',
+  cmd: '用 5-10 个词清楚简洁地描述此命令的作用。示例：\n输入：dir\n输出：列出当前目录\n\n输入：if exist "package.json" type "package.json"\n输出：存在时打印 package.json\n\n输入：mkdir tmp\n输出：创建目录 tmp',
 }
 
 export type Limits = {
@@ -21,10 +21,10 @@ export type Limits = {
 
 export function parameterSchema(description: string) {
   return Schema.Struct({
-    command: Schema.String.annotate({ description: "The command to execute" }),
-    timeout: Schema.optional(PositiveInt).annotate({ description: "Optional timeout in milliseconds" }),
+    command: Schema.String.annotate({ description: "要执行的命令" }),
+    timeout: Schema.optional(PositiveInt).annotate({ description: "可选 timeout，单位为 milliseconds" }),
     workdir: Schema.optional(Schema.String).annotate({
-      description: `The working directory to run the command in. Defaults to the current directory. Use this instead of 'cd' commands.`,
+      description: `运行命令的工作目录。默认为当前目录。请使用此参数，而不是 'cd' 命令。`,
     }),
     description: Schema.String.annotate({ description }),
   })
@@ -50,77 +50,77 @@ function shellDisplayName(name: string) {
 
 function powershellNotes(name: string) {
   if (name === "pwsh") {
-    return `# PowerShell (7+) shell notes
-- This cross-platform shell supports pipeline chain operators (\`&&\` and \`||\`).
-- Use double quotes for interpolated strings (\`"Hello $name"\`), single quotes for verbatim strings.
-- Prefer full cmdlet names like \`Get-ChildItem\`, \`Set-Content\`, \`Remove-Item\`, and \`New-Item\` over aliases.
-- Use \`$(...)\` for subexpressions. Use \`@(...)\` for array expressions.
-- To call a native executable whose path contains spaces, use the call operator: \`& "path/to/exe" args\`.
-- Escape special characters with the PowerShell backtick character.`
+    return `# PowerShell (7+) shell 说明
+- 此跨平台 shell 支持 pipeline chain operators（\`&&\` 和 \`||\`）。
+- 插值字符串使用双引号（\`"Hello $name"\`），逐字字符串使用单引号。
+- 优先使用完整 cmdlet 名称，例如 \`Get-ChildItem\`、\`Set-Content\`、\`Remove-Item\` 和 \`New-Item\`，而不是 aliases。
+- 使用 \`$(...)\` 表示 subexpressions。使用 \`@(...)\` 表示 array expressions。
+- 调用路径中包含空格的 native executable 时，使用 call operator：\`& "path/to/exe" args\`。
+- 使用 PowerShell backtick character 转义特殊字符。`
   }
   if (name === "powershell") {
-    return `# Windows PowerShell (5.1) shell notes
-- Use \`cmd1; if ($?) { cmd2 }\` to chain dependent commands.
-- Use double quotes for interpolated strings (\`"Hello $name"\`), single quotes for verbatim strings.
-- Prefer full cmdlet names like \`Get-ChildItem\`, \`Set-Content\`, \`Remove-Item\`, and \`New-Item\` over aliases.
-- Use \`$(...)\` for subexpressions. Use \`@(...)\` for array expressions.
-- To call a native executable whose path contains spaces, use the call operator: \`& "path/to/exe" args\`.
-- Escape special characters with the PowerShell backtick character.`
+    return `# Windows PowerShell (5.1) shell 说明
+- 使用 \`cmd1; if ($?) { cmd2 }\` 串联有依赖关系的命令。
+- 插值字符串使用双引号（\`"Hello $name"\`），逐字字符串使用单引号。
+- 优先使用完整 cmdlet 名称，例如 \`Get-ChildItem\`、\`Set-Content\`、\`Remove-Item\` 和 \`New-Item\`，而不是 aliases。
+- 使用 \`$(...)\` 表示 subexpressions。使用 \`@(...)\` 表示 array expressions。
+- 调用路径中包含空格的 native executable 时，使用 call operator：\`& "path/to/exe" args\`。
+- 使用 PowerShell backtick character 转义特殊字符。`
   }
   return ""
 }
 
 function chainGuidance(name: string) {
   if (name === "powershell") {
-    return "If the commands depend on each other and must run sequentially, avoid '&&' in this shell because Windows PowerShell (5.1) does not support it. Use PowerShell conditionals such as `cmd1; if ($?) { cmd2 }` when later commands must depend on earlier success."
+    return "如果命令相互依赖并且必须顺序运行，请避免在此 shell 中使用 '&&'，因为 Windows PowerShell (5.1) 不支持它。当后续命令必须依赖前面命令成功时，使用 PowerShell conditionals，例如 `cmd1; if ($?) { cmd2 }`。"
   }
   if (PS.has(name)) {
-    return "If the commands depend on each other and must run sequentially, use a single bash tool call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like New-Item before Copy-Item, Write before bash for git operations, or git add before git commit), run these operations sequentially instead."
+    return "如果命令相互依赖并且必须顺序运行，请在单个 bash tool call 中使用 '&&' 将它们串联起来（例如 `git add . && git commit -m \"message\" && git push`）。例如，如果一个操作必须在另一个操作开始前完成（如 Copy-Item 前的 New-Item、git 操作中 bash 前的 Write、或 git commit 前的 git add），请顺序运行这些操作。"
   }
   if (CMD.has(name)) {
-    return "If the commands depend on each other and must run sequentially, use a single bash tool call with `&&` to chain them together (e.g., `mkdir out && dir out`). For instance, if one operation must complete before another starts, run these operations sequentially instead."
+    return "如果命令相互依赖并且必须顺序运行，请在单个 bash tool call 中使用 `&&` 将它们串联起来（例如 `mkdir out && dir out`）。例如，如果一个操作必须在另一个操作开始前完成，请顺序运行这些操作。"
   }
-  return "If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like mkdir before cp, Write before Bash for git operations, or git add before git commit), run these operations sequentially instead."
+  return "如果命令相互依赖并且必须顺序运行，请在单个 Bash 调用中使用 '&&' 将它们串联起来（例如 `git add . && git commit -m \"message\" && git push`）。例如，如果一个操作必须在另一个操作开始前完成（如 cp 前的 mkdir、git 操作中 Bash 前的 Write、或 git commit 前的 git add），请顺序运行这些操作。"
 }
 
 function bashCommandSection(chain: string, limits: Limits, defaultTimeoutMs: number) {
-  return `Before executing the command, please follow these steps:
+  return `执行命令前，请遵循以下步骤：
 
-1. Directory Verification:
-   - If the command will create new directories or files, first use \`ls\` to verify the parent directory exists and is the correct location
-   - For example, before running "mkdir foo/bar", first use \`ls foo\` to check that "foo" exists and is the intended parent directory
+1. 目录验证：
+   - 如果命令会创建新目录或文件，先使用 \`ls\` 验证父目录存在且位置正确
+   - 例如，运行 "mkdir foo/bar" 前，先使用 \`ls foo\` 检查 "foo" 存在且是预期父目录
 
-2. Command Execution:
-   - Always quote file paths that contain spaces with double quotes (e.g., rm "path with spaces/file.txt")
-   - Examples of proper quoting:
-     - mkdir "/Users/name/My Documents" (correct)
-     - mkdir /Users/name/My Documents (incorrect - will fail)
-     - python "/path/with spaces/script.py" (correct)
-     - python /path/with spaces/script.py (incorrect - will fail)
-   - After ensuring proper quoting, execute the command.
-   - Capture the output of the command.
+2. 命令执行：
+   - 对包含空格的文件路径，始终用双引号包裹（例如 rm "path with spaces/file.txt"）
+   - 正确引用示例：
+     - mkdir "/Users/name/My Documents"（正确）
+     - mkdir /Users/name/My Documents（错误，会失败）
+     - python "/path/with spaces/script.py"（正确）
+     - python /path/with spaces/script.py（错误，会失败）
+   - 确保正确引用后，执行命令。
+   - 捕获命令输出。
 
-Usage notes:
-  - The command argument is required.
-  - You can specify an optional timeout in milliseconds. If not specified, commands will time out after ${defaultTimeoutMs}ms.
-  - It is very helpful if you write a clear, concise description of what this command does in 5-10 words.
-  - If the output exceeds ${limits.maxLines} lines or ${limits.maxBytes} bytes, it will be truncated and the full output will be written to a file. You can use Read with offset/limit to read specific sections or Grep to search the full content. Do NOT use \`head\`, \`tail\`, or other truncation commands to limit output; the full output will already be captured to a file for more precise searching.
+用法说明：
+  - command 参数必填。
+  - 可以指定可选 timeout，单位为 milliseconds。如果未指定，命令会在 ${defaultTimeoutMs}ms 后超时。
+  - 用 5-10 个词清楚简洁地描述命令作用会很有帮助。
+  - 如果输出超过 ${limits.maxLines} 行或 ${limits.maxBytes} bytes，它会被截断，完整输出会写入文件。你可以使用 Read 配合 offset/limit 读取特定部分，或使用 Grep 搜索完整内容。不要使用 \`head\`、\`tail\` 或其他截断命令限制输出；完整输出已经会被捕获到文件，以便更精确搜索。
 
-  - Avoid using Bash with the \`find\`, \`grep\`, \`cat\`, \`head\`, \`tail\`, \`sed\`, \`awk\`, or \`echo\` commands, unless explicitly instructed or when these commands are truly necessary for the task. Instead, always prefer using the dedicated tools for these commands:
-    - File search: Use Glob (NOT find or ls)
-    - Content search: Use Grep (NOT grep or rg)
-    - Read files: Use Read (NOT cat/head/tail)
-    - Edit files: Use Edit (NOT sed/awk)
-    - Write files: Use Write (NOT echo >/cat <<EOF)
-    - Communication: Output text directly (NOT echo/printf)
-  - When issuing multiple commands:
-    - If the commands are independent and can run in parallel, make multiple bash tool calls in a single message. For example, if you need to run "git status" and "git diff", send a single message with two bash tool calls in parallel.
+  - 除非明确要求，或这些命令对任务确实必要，否则避免在 Bash 中使用 \`find\`、\`grep\`、\`cat\`、\`head\`、\`tail\`、\`sed\`、\`awk\` 或 \`echo\` 命令。应始终优先使用这些命令对应的专用工具：
+    - 文件搜索：使用 Glob（不要用 find 或 ls）
+    - 内容搜索：使用 Grep（不要用 grep 或 rg）
+    - 读取文件：使用 Read（不要用 cat/head/tail）
+    - 编辑文件：使用 Edit（不要用 sed/awk）
+    - 写入文件：使用 Write（不要用 echo >/cat <<EOF）
+    - 沟通：直接输出文本（不要用 echo/printf）
+  - 发出多个命令时：
+    - 如果命令相互独立并可并行运行，在一条消息中发起多个 bash 工具调用。例如，如果需要运行 "git status" 和 "git diff"，就在一条消息中发送两个并行 bash 工具调用。
     - ${chain}
-    - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail
-    - DO NOT use newlines to separate commands (newlines are ok in quoted strings)
-  - AVOID using \`cd <directory> && <command>\`. Use the \`workdir\` parameter to change directories instead.
+    - 只有在需要顺序运行命令但不关心前面命令是否失败时，才使用 ';'
+    - 不要使用换行分隔命令（quoted strings 中的换行可以）
+  - 避免使用 \`cd <directory> && <command>\`。改用 \`workdir\` 参数切换目录。
     <good-example>
-    Use workdir="/foo/bar" with command: pytest tests
+    使用 workdir="/foo/bar"，命令为：pytest tests
     </good-example>
     <bad-example>
     cd /foo/bar && pytest tests
@@ -136,43 +136,43 @@ function powershellCommandSection(
 ) {
   return `${powershellNotes(name)}
 
-Before executing the command, please follow these steps:
+执行命令前，请遵循以下步骤：
 
-1. Directory Verification:
-   - If the command will create new directories or files, first use \`Test-Path -LiteralPath <parent>\` to verify the parent directory exists and is the correct location
-   - For example, before creating \`foo${pathSep}bar\`, first use \`Test-Path -LiteralPath "foo"\` to check that \`foo\` exists and is the intended parent directory
+1. 目录验证：
+   - 如果命令会创建新目录或文件，先使用 \`Test-Path -LiteralPath <parent>\` 验证父目录存在且位置正确
+   - 例如，创建 \`foo${pathSep}bar\` 前，先使用 \`Test-Path -LiteralPath "foo"\` 检查 \`foo\` 存在且是预期父目录
 
-2. Command Execution:
-   - Always quote file paths that contain spaces with double quotes (e.g., Remove-Item -LiteralPath "path with spaces${pathSep}file.txt")
-   - Examples of proper quoting:
-     - New-Item -ItemType Directory -Path "My Documents" (correct)
-     - New-Item -ItemType Directory -Path My Documents (incorrect - path is split)
-     - & "path with spaces${pathSep}script.ps1" (correct)
-     - path with spaces${pathSep}script.ps1 (incorrect - path is split and not invoked)
-   - After ensuring proper quoting, execute the command.
-   - Capture the output of the command.
+2. 命令执行：
+   - 对包含空格的文件路径，始终用双引号包裹（例如 Remove-Item -LiteralPath "path with spaces${pathSep}file.txt"）
+   - 正确引用示例：
+     - New-Item -ItemType Directory -Path "My Documents"（正确）
+     - New-Item -ItemType Directory -Path My Documents（错误，路径会被拆分）
+     - & "path with spaces${pathSep}script.ps1"（正确）
+     - path with spaces${pathSep}script.ps1（错误，路径会被拆分且不会被调用）
+   - 确保正确引用后，执行命令。
+   - 捕获命令输出。
 
-Usage notes:
-  - The command argument is required.
-  - You can specify an optional timeout in milliseconds. If not specified, commands will time out after ${defaultTimeoutMs}ms.
-  - It is very helpful if you write a clear, concise description of what this command does in 5-10 words.
-  - If the output exceeds ${limits.maxLines} lines or ${limits.maxBytes} bytes, it will be truncated and the full output will be written to a file. You can use Read with offset/limit to read specific sections or Grep to search the full content. Do NOT use \`Select-Object -First\`, \`Select-Object -Last\`, or other truncation commands to limit output; the full output will already be captured to a file for more precise searching.
+用法说明：
+  - command 参数必填。
+  - 可以指定可选 timeout，单位为 milliseconds。如果未指定，命令会在 ${defaultTimeoutMs}ms 后超时。
+  - 用 5-10 个词清楚简洁地描述命令作用会很有帮助。
+  - 如果输出超过 ${limits.maxLines} 行或 ${limits.maxBytes} bytes，它会被截断，完整输出会写入文件。你可以使用 Read 配合 offset/limit 读取特定部分，或使用 Grep 搜索完整内容。不要使用 \`Select-Object -First\`、\`Select-Object -Last\` 或其他截断命令限制输出；完整输出已经会被捕获到文件，以便更精确搜索。
 
-  - Avoid using Shell with PowerShell file/content cmdlets unless explicitly instructed or when these cmdlets are truly necessary for the task. Instead, always prefer using the dedicated tools for these commands:
-    - File search: Use Glob (NOT Get-ChildItem)
-    - Content search: Use Grep (NOT Select-String)
-    - Read files: Use Read (NOT Get-Content)
-    - Edit files: Use Edit (NOT Set-Content)
-    - Write files: Use Write (NOT Set-Content/Out-File or here-strings)
-    - Communication: Output text directly (NOT Write-Output/Write-Host)
-  - When issuing multiple commands:
-    - If the commands are independent and can run in parallel, make multiple bash tool calls in a single message. For example, if you need to run "git status" and "git diff", send a single message with two bash tool calls in parallel.
+  - 除非明确要求，或这些 cmdlets 对任务确实必要，否则避免在 Shell 中使用 PowerShell 文件/内容 cmdlets。应始终优先使用这些命令对应的专用工具：
+    - 文件搜索：使用 Glob（不要用 Get-ChildItem）
+    - 内容搜索：使用 Grep（不要用 Select-String）
+    - 读取文件：使用 Read（不要用 Get-Content）
+    - 编辑文件：使用 Edit（不要用 Set-Content）
+    - 写入文件：使用 Write（不要用 Set-Content/Out-File 或 here-strings）
+    - 沟通：直接输出文本（不要用 Write-Output/Write-Host）
+  - 发出多个命令时：
+    - 如果命令相互独立并可并行运行，在一条消息中发起多个 bash 工具调用。例如，如果需要运行 "git status" 和 "git diff"，就在一条消息中发送两个并行 bash 工具调用。
     - ${chain}
-    - Use \`;\` only when you need to run commands sequentially but don't care if earlier commands fail
-    - DO NOT use newlines to separate commands (newlines are ok in quoted strings)
-  - AVOID changing directories inside the command. Use the \`workdir\` parameter to change directories instead.
+    - 只有在需要顺序运行命令但不关心前面命令是否失败时，才使用 \`;\`
+    - 不要使用换行分隔命令（quoted strings 中的换行可以）
+  - 避免在命令内部切换目录。改用 \`workdir\` 参数切换目录。
     <good-example>
-    Use workdir="project${pathSep}subdir" with command: pytest tests
+    使用 workdir="project${pathSep}subdir"，命令为：pytest tests
     </good-example>
     <bad-example>
     ${name === "powershell" ? `Set-Location -LiteralPath "project${pathSep}subdir"; if ($?) { pytest tests }` : `Set-Location -LiteralPath "project${pathSep}subdir" && pytest tests`}
@@ -180,49 +180,49 @@ Usage notes:
 }
 
 function cmdCommandSection(chain: string, limits: Limits, defaultTimeoutMs: number) {
-  return `# cmd.exe shell notes
-- Use double quotes for paths with spaces.
-- Use %VAR% for environment variables.
-- Use \`if exist\` for existence checks.
-- Use \`call\` when invoking batch files from another batch-style command.
+  return `# cmd.exe shell 说明
+- 对包含空格的路径使用双引号。
+- 环境变量使用 %VAR%。
+- 存在性检查使用 \`if exist\`。
+- 从另一个 batch-style command 调用 batch files 时使用 \`call\`。
 
-Before executing the command, please follow these steps:
+执行命令前，请遵循以下步骤：
 
-1. Directory Verification:
-   - If the command will create new directories or files, first use \`if exist\` to verify the parent directory exists and is the correct location
-   - For example, before creating \`foo\\bar\`, first use \`if exist "foo\\" dir "foo"\` to check that \`foo\` exists and is the intended parent directory
+1. 目录验证：
+   - 如果命令会创建新目录或文件，先使用 \`if exist\` 验证父目录存在且位置正确
+   - 例如，创建 \`foo\\bar\` 前，先使用 \`if exist "foo\\" dir "foo"\` 检查 \`foo\` 存在且是预期父目录
 
-2. Command Execution:
-   - Always quote file paths that contain spaces with double quotes (e.g., del "path with spaces\\file.txt")
-   - Examples of proper quoting:
-     - mkdir "My Documents" (correct)
-     - mkdir My Documents (incorrect - path is split)
-     - call "path with spaces\\script.bat" (correct)
-     - path with spaces\\script.bat (incorrect - path is split and not invoked correctly)
-   - After ensuring proper quoting, execute the command.
-   - Capture the output of the command.
+2. 命令执行：
+   - 对包含空格的文件路径，始终用双引号包裹（例如 del "path with spaces\\file.txt"）
+   - 正确引用示例：
+     - mkdir "My Documents"（正确）
+     - mkdir My Documents（错误，路径会被拆分）
+     - call "path with spaces\\script.bat"（正确）
+     - path with spaces\\script.bat（错误，路径会被拆分且无法正确调用）
+   - 确保正确引用后，执行命令。
+   - 捕获命令输出。
 
-Usage notes:
-  - The command argument is required.
-  - You can specify an optional timeout in milliseconds. If not specified, commands will time out after ${defaultTimeoutMs}ms.
-  - It is very helpful if you write a clear, concise description of what this command does in 5-10 words.
-  - If the output exceeds ${limits.maxLines} lines or ${limits.maxBytes} bytes, it will be truncated and the full output will be written to a file. You can use Read with offset/limit to read specific sections or Grep to search the full content. Do NOT use \`more\` or other pagination commands to limit output; the full output will already be captured to a file for more precise searching.
+用法说明：
+  - command 参数必填。
+  - 可以指定可选 timeout，单位为 milliseconds。如果未指定，命令会在 ${defaultTimeoutMs}ms 后超时。
+  - 用 5-10 个词清楚简洁地描述命令作用会很有帮助。
+  - 如果输出超过 ${limits.maxLines} 行或 ${limits.maxBytes} bytes，它会被截断，完整输出会写入文件。你可以使用 Read 配合 offset/limit 读取特定部分，或使用 Grep 搜索完整内容。不要使用 \`more\` 或其他分页命令限制输出；完整输出已经会被捕获到文件，以便更精确搜索。
 
-  - Avoid using Shell with cmd.exe file/content commands unless explicitly instructed or when these commands are truly necessary for the task. Instead, always prefer using the dedicated tools for these commands:
-    - File search: Use Glob (NOT dir /s)
-    - Content search: Use Grep (NOT findstr)
-    - Read files: Use Read (NOT type)
-    - Edit files: Use Edit (NOT copy)
-    - Write files: Use Write (NOT echo > file)
-    - Communication: Output text directly (NOT echo)
-  - When issuing multiple commands:
-    - If the commands are independent and can run in parallel, make multiple bash tool calls in a single message. For example, if you need to run "dir" and "where cmd", send a single message with two bash tool calls in parallel.
+  - 除非明确要求，或这些命令对任务确实必要，否则避免在 Shell 中使用 cmd.exe 文件/内容命令。应始终优先使用这些命令对应的专用工具：
+    - 文件搜索：使用 Glob（不要用 dir /s）
+    - 内容搜索：使用 Grep（不要用 findstr）
+    - 读取文件：使用 Read（不要用 type）
+    - 编辑文件：使用 Edit（不要用 copy）
+    - 写入文件：使用 Write（不要用 echo > file）
+    - 沟通：直接输出文本（不要用 echo）
+  - 发出多个命令时：
+    - 如果命令相互独立并可并行运行，在一条消息中发起多个 bash 工具调用。例如，如果需要运行 "dir" 和 "where cmd"，就在一条消息中发送两个并行 bash 工具调用。
     - ${chain}
-    - Use \`&\` only when you need to run commands sequentially but don't care if earlier commands fail
-    - DO NOT use newlines to separate commands (newlines are ok in quoted strings)
-  - AVOID changing directories inside the command. Use the \`workdir\` parameter to change directories instead.
+    - 只有在需要顺序运行命令但不关心前面命令是否失败时，才使用 \`&\`
+    - 不要使用换行分隔命令（quoted strings 中的换行可以）
+  - 避免在命令内部切换目录。改用 \`workdir\` 参数切换目录。
     <good-example>
-    Use workdir="project\\subdir" with command: dir
+    使用 workdir="project\\subdir"，命令为：dir
     </good-example>
     <bad-example>
     cd /d "project\\subdir" && dir
@@ -234,22 +234,22 @@ function profile(name: string, platform: NodeJS.Platform, limits: Limits, defaul
   const chain = chainGuidance(name)
   if (CMD.has(name)) {
     return {
-      intro: `Executes a given ${shellDisplayName(name)} command with optional timeout, ensuring proper handling and security measures.`,
+      intro: `执行给定的 ${shellDisplayName(name)} 命令，可设置 optional timeout，并确保适当处理和安全措施。`,
       workdirSection:
-        "All commands run in the current working directory by default. Use the `workdir` parameter if you need to run a command in a different directory. AVOID changing directories inside the command - use `workdir` instead.",
+        "默认情况下，所有命令都在当前工作目录运行。如果需要在不同目录运行命令，使用 `workdir` 参数。避免在命令内部切换目录，改用 `workdir`。",
       commandSection: cmdCommandSection(chain, limits, defaultTimeoutMs),
       gitCommands: "git commands",
       gitCommandRestriction: "git commands",
-      createPrInstruction: "Create PR using a temporary body file so cmd.exe quoting stays simple.",
+      createPrInstruction: "使用临时 body 文件创建 PR，让 cmd.exe quoting 保持简单。",
       createPrExample: `(\n  echo ## Summary\n  echo - ^<1-3 bullet points^>\n) > pr-body.txt\ngh pr create --title "the pr title" --body-file pr-body.txt`,
       parameterDescription: descriptions.cmd,
     }
   }
   if (isPowerShell) {
     return {
-      intro: `Executes a given ${shellDisplayName(name)} command with optional timeout, ensuring proper handling and security measures.`,
+      intro: `执行给定的 ${shellDisplayName(name)} 命令，可设置 optional timeout，并确保适当处理和安全措施。`,
       workdirSection:
-        "All commands run in the current working directory by default. Use the `workdir` parameter if you need to run a command in a different directory. AVOID changing directories inside the command - use `workdir` instead.",
+        "默认情况下，所有命令都在当前工作目录运行。如果需要在不同目录运行命令，使用 `workdir` 参数。避免在命令内部切换目录，改用 `workdir`。",
       commandSection: powershellCommandSection(
         name,
         chain,
@@ -259,7 +259,7 @@ function profile(name: string, platform: NodeJS.Platform, limits: Limits, defaul
       ),
       gitCommands: "git commands",
       gitCommandRestriction: "git commands",
-      createPrInstruction: "Create PR using gh pr create with a PowerShell here-string to pass the body correctly.",
+      createPrInstruction: "使用 gh pr create 创建 PR，并用 PowerShell here-string 正确传递 body。",
       createPrExample: `gh pr create --title "the pr title" --body @'
 ## Summary
 - <1-3 bullet points>
@@ -269,14 +269,14 @@ function profile(name: string, platform: NodeJS.Platform, limits: Limits, defaul
   }
   return {
     intro:
-      "Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures.",
+      "在持久 shell session 中执行给定 bash 命令，可设置 optional timeout，并确保适当处理和安全措施。",
     workdirSection:
-      "All commands run in the current working directory by default. Use the `workdir` parameter if you need to run a command in a different directory. AVOID using `cd <directory> && <command>` patterns - use `workdir` instead.",
+      "默认情况下，所有命令都在当前工作目录运行。如果需要在不同目录运行命令，使用 `workdir` 参数。避免使用 `cd <directory> && <command>` 模式，改用 `workdir`。",
     commandSection: bashCommandSection(chain, limits, defaultTimeoutMs),
     gitCommands: "bash commands",
     gitCommandRestriction: "git bash commands",
     createPrInstruction:
-      "Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.",
+      "使用以下格式通过 gh pr create 创建 PR。使用 HEREDOC 传递 body，以确保格式正确。",
     createPrExample: `gh pr create --title "the pr title" --body "$(cat <<'EOF'
 ## Summary
 <1-3 bullet points>`,

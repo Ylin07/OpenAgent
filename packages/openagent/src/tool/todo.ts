@@ -7,15 +7,15 @@ import { Todo } from "../session/todo"
 // here rather than referencing its `.shape` — the LLM-visible JSON Schema is
 // identical, and it removes the last zod dependency from this tool.
 const TodoItem = Schema.Struct({
-  content: Schema.String.annotate({ description: "Brief description of the task" }),
+  content: Schema.String.annotate({ description: "任务简短描述" }),
   status: Schema.String.annotate({
-    description: "Current status of the task: pending, in_progress, completed, cancelled",
+    description: "任务当前状态：pending、in_progress、completed、cancelled",
   }),
-  priority: Schema.String.annotate({ description: "Priority level of the task: high, medium, low" }),
+  priority: Schema.String.annotate({ description: "任务优先级：high、medium、low" }),
 })
 
 export const Parameters = Schema.Struct({
-  todos: Schema.mutable(Schema.Array(TodoItem)).annotate({ description: "The updated todo list" }),
+  todos: Schema.mutable(Schema.Array(TodoItem)).annotate({ description: "更新后的 todo list" }),
 })
 
 type Metadata = {

@@ -12,12 +12,12 @@ import { Reference } from "@/reference/reference"
 const MAX_LINE_LENGTH = 2000
 
 export const Parameters = Schema.Struct({
-  pattern: Schema.String.annotate({ description: "The regex pattern to search for in file contents" }),
+  pattern: Schema.String.annotate({ description: "用于搜索文件内容的 regex pattern" }),
   path: Schema.optional(Schema.String).annotate({
-    description: "The directory to search in. Defaults to the current working directory.",
+    description: "要搜索的目录。默认为当前工作目录。",
   }),
   include: Schema.optional(Schema.String).annotate({
-    description: 'File pattern to include in the search (e.g. "*.js", "*.{ts,tsx}")',
+    description: '要纳入搜索的 file pattern（例如 "*.js"、"*.{ts,tsx}"）',
   }),
 })
 
@@ -36,7 +36,7 @@ export const GrepTool = Tool.define(
           const empty = {
             title: params.pattern,
             metadata: { matches: 0, truncated: false },
-            output: "No files found",
+            output: "未找到文件",
           }
           if (!params.pattern) {
             throw new Error("pattern is required")

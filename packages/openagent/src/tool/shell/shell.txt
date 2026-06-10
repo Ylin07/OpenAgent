@@ -1,21 +1,21 @@
 ${intro}
 
-Be aware: OS: ${os}, Shell: ${shell}
+注意：OS: ${os}, Shell: ${shell}
 
 ${workdirSection}
 
-Use `${tmp}` for temporary work outside the workspace. This directory has already been created, already exists, and is pre-approved for external directory access.
+如需在 workspace 外执行临时工作，请使用 `${tmp}`。该目录已经创建并存在，且已预先批准 external directory access。
 
-IMPORTANT: This tool is for terminal operations like git, npm, docker, etc. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.
+重要：此工具用于 git、npm、docker 等终端操作。不要用它执行文件操作（读取、写入、编辑、搜索、查找文件）；这些操作请改用专用工具。
 
 ${commandSection}
 
 # Git and GitHub
-- Only commit, amend, push, or create PRs when explicitly requested.
-- Before committing, inspect `git status`, `git diff`, and `git log --oneline -10`; stage only intended files and never commit secrets.
-- Write a concise commit message that matches the repo style.
-- Do not update git config, skip hooks, use interactive `-i`, force-push, or create empty commits unless explicitly requested.
-- If a commit fails or hooks reject it, fix the issue and create a new commit; do not amend the failed commit.
-- Before creating a PR, inspect status, diff, remote tracking, recent commits, and the diff from the base branch.
-- Review all commits included in the PR, not just the latest commit.
-- Use `gh` for GitHub tasks, including PRs, issues, checks, and releases; return the PR URL when done.
+- 只有在明确要求时才 commit、amend、push 或创建 PR。
+- commit 前，检查 `git status`、`git diff` 和 `git log --oneline -10`；只 stage 预期文件，绝不要提交 secrets。
+- 编写符合仓库风格的简洁 commit message。
+- 除非明确要求，否则不要更新 git config、跳过 hooks、使用交互式 `-i`、force-push 或创建空 commits。
+- 如果 commit 失败或 hooks 拒绝，修复问题并创建新的 commit；不要 amend 失败的 commit。
+- 创建 PR 前，检查 status、diff、remote tracking、recent commits，以及相对 base branch 的 diff。
+- 审查 PR 中包含的所有 commits，而不是只看最新 commit。
+- 使用 `gh` 执行 GitHub 任务，包括 PRs、issues、checks 和 releases；完成后返回 PR URL。

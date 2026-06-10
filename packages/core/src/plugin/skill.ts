@@ -18,7 +18,7 @@ function customizeSkillDescription(name: Name) {
   const config = `${name}.json`
   const configc = `${name}.jsonc`
   const dir = `.${name}`
-  return `Use ONLY when the user is editing or creating ${name}'s own configuration: ${config}, ${configc}, files under ${dir}/, or files under ~/.config/${name}/. Also use when creating or fixing ${name} agents, subagents, skills, plugins, MCP servers, or permission rules. Do not use for the user's own application code, or for any project that is not configuring ${name} itself.`
+  return `仅当用户正在编辑或创建 ${name} 自身配置时使用：${config}、${configc}、${dir}/ 下的文件，或 ~/.config/${name}/ 下的文件。创建或修复 ${name} agents、subagents、skills、plugins、MCP servers 或 permission rules 时也使用。不要用于用户自己的应用代码，也不要用于任何不是在配置 ${name} 本身的项目。`
 }
 
 export const CustomizeSkillName = `customize-${App.name}`

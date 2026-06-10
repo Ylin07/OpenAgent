@@ -23,32 +23,32 @@ export interface TaskPromptOps {
 
 const id = "task"
 const BACKGROUND_DESCRIPTION = [
-  "Background mode: background=true launches the subagent asynchronously and returns immediately.",
-  "Foreground is the default; use it when you need the result before continuing.",
-  "Use background only for independent work that can run while you continue elsewhere.",
-  "You will be notified automatically when it finishes.",
+  "Background mode：background=true 会异步启动 subagent 并立即返回。",
+  "Foreground 是默认模式；当你需要拿到结果后再继续时使用它。",
+  "仅对可在你处理其他事项时独立运行的工作使用 background。",
+  "完成时你会自动收到通知。",
 ].join(" ")
 const BACKGROUND_STARTED = [
-  "The task is working in the background. You will be notified automatically when it finishes.",
-  "Do not poll for progress, ask the task for status, or duplicate this task's work — avoid working with the same files or topics it is using.",
-  "Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.",
+  "任务正在后台运行。完成时你会自动收到通知。",
+  "不要轮询进度、询问任务状态或重复该任务的工作；避免处理它正在使用的相同文件或主题。",
+  "处理不重叠的任务，或简要告知用户你启动了什么，然后结束回复。",
 ].join("\n")
 const BACKGROUND_UPDATED = [
-  "Additional context sent to the running background task.",
-  "The task is still working in the background. You will be notified automatically when it finishes.",
-  "Do not poll for progress, ask the task for status, or duplicate this task's work — avoid working with the same files or topics it is using.",
-  "Work on non-overlapping tasks, or briefly tell the user what you sent and end your response.",
+  "已向正在运行的后台任务发送额外上下文。",
+  "任务仍在后台运行。完成时你会自动收到通知。",
+  "不要轮询进度、询问任务状态或重复该任务的工作；避免处理它正在使用的相同文件或主题。",
+  "处理不重叠的任务，或简要告知用户你发送了什么，然后结束回复。",
 ].join("\n")
 
 const BaseParameterFields = {
-  description: Schema.String.annotate({ description: "A short (3-5 words) description of the task" }),
-  prompt: Schema.String.annotate({ description: "The task for the agent to perform" }),
-  subagent_type: Schema.String.annotate({ description: "The type of specialized agent to use for this task" }),
+  description: Schema.String.annotate({ description: "任务的简短描述（3-5 个词）" }),
+  prompt: Schema.String.annotate({ description: "要 agent 执行的任务" }),
+  subagent_type: Schema.String.annotate({ description: "此任务要使用的 specialized agent 类型" }),
   task_id: Schema.optional(Schema.String).annotate({
     description:
-      "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
+      "仅当你想恢复之前的任务时才设置此字段（可传入先前的 task_id，该任务会继续同一个 subagent session，而不是创建新 session）",
   }),
-  command: Schema.optional(Schema.String).annotate({ description: "The command that triggered this task" }),
+  command: Schema.optional(Schema.String).annotate({ description: "触发此任务的命令" }),
 }
 
 const BaseParameters = Schema.Struct(BaseParameterFields)
@@ -56,7 +56,7 @@ const BaseParameters = Schema.Struct(BaseParameterFields)
 export const Parameters = Schema.Struct({
   ...BaseParameterFields,
   background: Schema.optional(Schema.Boolean).annotate({
-    description: "Run the agent in the background. You will be notified when it completes.",
+    description: "在后台运行 agent。完成时你会收到通知。",
   }),
 })
 
@@ -96,7 +96,7 @@ export const TaskTool = Tool.define(
       const runInBackground = params.background === true
       if (runInBackground && !flags.experimentalBackgroundSubagents) {
         return yield* Effect.fail(
-          new Error("Background subagents require OPENAGENT_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true"),
+          new Error("后台 subagents 需要 OPENAGENT_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true"),
         )
       }
 
@@ -210,8 +210,8 @@ export const TaskTool = Tool.define(
                   state,
                   summary:
                     state === "completed"
-                      ? `Background task completed: ${params.description}`
-                      : `Background task failed: ${params.description}`,
+                      ? `后台任务已完成：${params.description}`
+                      : `后台任务失败：${params.description}`,
                   text,
                 }),
               },
@@ -242,7 +242,7 @@ export const TaskTool = Tool.define(
           output: renderOutput({
             sessionID: nextSession.id,
             state: "running",
-            summary: "Background task updated",
+            summary: "后台任务已更新",
             text: BACKGROUND_UPDATED,
           }),
         }
@@ -274,7 +274,7 @@ export const TaskTool = Tool.define(
           output: renderOutput({
             sessionID: nextSession.id,
             state: "running",
-            summary: "Background task started",
+            summary: "后台任务已启动",
             text: BACKGROUND_STARTED,
           }),
         }

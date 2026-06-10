@@ -16,7 +16,7 @@ import { Format } from "../format"
 import * as Bom from "@/util/bom"
 
 export const Parameters = Schema.Struct({
-  patchText: Schema.String.annotate({ description: "The full patch text that describes all changes to be made" }),
+  patchText: Schema.String.annotate({ description: "描述所有待执行变更的完整 patch text" }),
 })
 
 export const ApplyPatchTool = Tool.define(

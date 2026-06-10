@@ -70,15 +70,15 @@ globalThis.AI_SDK_LOG_WARNINGS = false
 const decodeMessageInfo = Schema.decodeUnknownExit(SessionV1.Info)
 const decodeMessagePart = Schema.decodeUnknownExit(SessionV1.Part)
 
-const STRUCTURED_OUTPUT_DESCRIPTION = `Use this tool to return your final response in the requested structured format.
+const STRUCTURED_OUTPUT_DESCRIPTION = `使用此工具以请求的结构化格式返回最终回复。
 
-IMPORTANT:
-- You MUST call this tool exactly once at the end of your response
-- The input must be valid JSON matching the required schema
-- Complete all necessary research and tool calls BEFORE calling this tool
-- This tool provides your final answer - no further actions are taken after calling it`
+重要：
+- 你必须在回复末尾准确调用此工具一次
+- 输入必须是符合所需 schema 的有效 JSON
+- 调用此工具前，先完成所有必要的调研和工具调用
+- 此工具提供你的最终答案；调用后不会再执行任何后续操作`
 
-const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested structured output. You MUST use the StructuredOutput tool to provide your final response. Do NOT respond with plain text - you MUST call the StructuredOutput tool with your answer formatted according to the schema.`
+const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `重要：用户已请求结构化输出。你必须使用 StructuredOutput 工具提供最终回复。不要用纯文本回复；你必须调用 StructuredOutput 工具，并按 schema 格式提交答案。`
 
 const log = Log.create({ service: "session.prompt" })
 const elog = EffectLogger.create({ service: "session.prompt" })
@@ -265,7 +265,7 @@ export const layer = Layer.effect(
           model: mdl,
           sessionID: input.session.id,
           retries: 2,
-          messages: [{ role: "user", content: "Generate a title for this conversation:\n" }, ...msgs],
+          messages: [{ role: "user", content: "为这段对话生成标题：\n" }, ...msgs],
         })
         .pipe(
           Stream.filter(LLMEvent.is.textDelta),
@@ -346,8 +346,8 @@ export const layer = Layer.effect(
       const taskAgent = yield* agents.get(task.agent)
       if (!taskAgent) {
         const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-        const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-        const error = new NamedError.Unknown({ message: `Agent not found: "${task.agent}".${hint}` })
+        const hint = available.length ? ` 可用 agents：${available.join(", ")}` : ""
+        const error = new NamedError.Unknown({ message: `未找到 agent："${task.agent}"。${hint}` })
         yield* events.publish(Session.Event.Error, { sessionID, error: error.toObject() })
         throw error
       }
@@ -446,7 +446,7 @@ export const layer = Layer.effect(
           ...part,
           state: {
             status: "error",
-            error: error ? `Tool execution failed: ${error.message}` : "Tool execution failed",
+            error: error ? `工具执行失败：${error.message}` : "工具执行失败",
             time: {
               start: part.state.status === "running" ? part.state.time.start : Date.now(),
               end: Date.now(),
@@ -473,7 +473,7 @@ export const layer = Layer.effect(
         messageID: summaryUserMsg.id,
         sessionID,
         type: "text",
-        text: "Summarize the task tool output above and continue with your task.",
+        text: "总结上方 task 工具输出，并继续你的任务。",
         synthetic: true,
       } satisfies SessionV1.TextPart)
     })
@@ -491,8 +491,8 @@ export const layer = Layer.effect(
             const agent = yield* agents.get(input.agent)
             if (!agent) {
               const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-              const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-              const error = new NamedError.Unknown({ message: `Agent not found: "${input.agent}".${hint}` })
+              const hint = available.length ? ` 可用 agents：${available.join(", ")}` : ""
+              const error = new NamedError.Unknown({ message: `未找到 agent："${input.agent}"。${hint}` })
               yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() })
               throw error
             }
@@ -511,7 +511,7 @@ export const layer = Layer.effect(
               id: PartID.ascending(),
               messageID: userMsg.id,
               sessionID: input.sessionID,
-              text: "The following tool was executed by the user",
+              text: "以下工具由用户执行",
               synthetic: true,
             }
             yield* sessions.updatePart(userPart)
@@ -684,8 +684,8 @@ export const layer = Layer.effect(
       const ag = agentName ? yield* agents.get(agentName) : yield* agents.defaultInfo()
       if (!ag) {
         const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-        const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-        const error = new NamedError.Unknown({ message: `Agent not found: "${agentName}".${hint}` })
+        const hint = available.length ? ` 可用 agents：${available.join(", ")}` : ""
+        const error = new NamedError.Unknown({ message: `未找到 agent："${agentName}"。${hint}` })
         yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() })
         throw error
       }
@@ -821,7 +821,7 @@ export const layer = Layer.effect(
                     sessionID: input.sessionID,
                     type: "text",
                     synthetic: true,
-                    text: `Called the Read tool with the following input: ${JSON.stringify({ filePath: part.filename })}`,
+                    text: `已使用以下输入调用 Read 工具：${JSON.stringify({ filePath: part.filename })}`,
                   },
                   {
                     messageID: info.id,
@@ -887,7 +887,7 @@ export const layer = Layer.effect(
                     sessionID: input.sessionID,
                     type: "text",
                     synthetic: true,
-                    text: `Called the Read tool with the following input: ${JSON.stringify(args)}`,
+                    text: `已使用以下输入调用 Read 工具：${JSON.stringify(args)}`,
                   },
                 ]
                 const exit = yield* provider.getModel(info.model.providerID, info.model.modelID).pipe(
@@ -962,7 +962,7 @@ export const layer = Layer.effect(
                     sessionID: input.sessionID,
                     type: "text",
                     synthetic: true,
-                    text: `Called the Read tool with the following input: ${JSON.stringify(args)}`,
+                    text: `已使用以下输入调用 Read 工具：${JSON.stringify(args)}`,
                   },
                   {
                     messageID: info.id,
@@ -981,7 +981,7 @@ export const layer = Layer.effect(
                   sessionID: input.sessionID,
                   type: "text",
                   synthetic: true,
-                  text: `Called the Read tool with the following input: {"filePath":"${filepath}"}`,
+                  text: `已使用以下输入调用 Read 工具：{"filePath":"${filepath}"}`,
                 },
                 {
                   id: part.id,
@@ -1002,7 +1002,7 @@ export const layer = Layer.effect(
 
         if (part.type === "agent") {
           const perm = Permission.evaluate("task", part.name, ag.permission)
-          const hint = perm.action === "deny" ? " . Invoked by user; guaranteed to exist." : ""
+          const hint = perm.action === "deny" ? "。由用户调用；保证存在。" : ""
           return [
             { ...part, messageID: info.id, sessionID: input.sessionID },
             {
@@ -1011,7 +1011,7 @@ export const layer = Layer.effect(
               type: "text",
               synthetic: true,
               text:
-                " Use the above message and context to generate a prompt and call the task tool with subagent: " +
+                "使用上方消息和上下文生成 prompt，并调用 task 工具，subagent 为：" +
                 part.name +
                 hint,
             },
@@ -1306,8 +1306,8 @@ export const layer = Layer.effect(
           const agent = yield* agents.get(lastUser.agent)
           if (!agent) {
             const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-            const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-            const error = new NamedError.Unknown({ message: `Agent not found: "${lastUser.agent}".${hint}` })
+            const hint = available.length ? ` 可用 agents：${available.join(", ")}` : ""
+            const error = new NamedError.Unknown({ message: `未找到 agent："${lastUser.agent}"。${hint}` })
             yield* events.publish(Session.Event.Error, { sessionID, error: error.toObject() })
             throw error
           }
@@ -1395,10 +1395,10 @@ export const layer = Layer.effect(
                   if (!p.text.trim()) continue
                   p.text = [
                     "<system-reminder>",
-                    "The user sent the following message:",
+                    "用户发送了以下消息：",
                     p.text,
                     "",
-                    "Please address this message and continue with your tasks.",
+                    "请处理此消息，并继续你的任务。",
                     "</system-reminder>",
                   ].join("\n")
                 }
@@ -1440,7 +1440,7 @@ export const layer = Layer.effect(
             if (finished && !handle.message.error) {
               if (format.type === "json_schema") {
                 handle.message.error = new SessionV1.StructuredOutputError({
-                  message: "Model did not produce structured output",
+                  message: "模型未生成结构化输出",
                   retries: 0,
                 }).toObject()
                 yield* sessions.updateMessage(handle.message)
@@ -1551,8 +1551,8 @@ export const layer = Layer.effect(
       const agent = agentName ? yield* agents.get(agentName) : yield* agents.defaultInfo()
       if (!agent) {
         const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-        const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-        const error = new NamedError.Unknown({ message: `Agent not found: "${agentName}".${hint}` })
+        const hint = available.length ? ` 可用 agents：${available.join(", ")}` : ""
+        const error = new NamedError.Unknown({ message: `未找到 agent："${agentName}"。${hint}` })
         yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() })
         throw error
       }
@@ -1733,8 +1733,8 @@ export function createStructuredOutputTool(input: {
       // AI SDK validates args against inputSchema before calling execute()
       input.onSuccess(args)
       return {
-        output: "Structured output captured successfully.",
-        title: "Structured Output",
+        output: "结构化输出已成功捕获。",
+        title: "结构化输出",
         metadata: { valid: true },
       }
     },

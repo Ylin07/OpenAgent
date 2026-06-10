@@ -59,7 +59,7 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
       sessionID: userMessage.info.sessionID,
       type: "text",
       text: exists
-        ? `${BUILD_SWITCH}\n\nA plan file exists at ${plan}. You should execute on the plan defined within it`
+        ? `${BUILD_SWITCH}\n\n计划文件位于 ${plan}。你应该执行其中定义的计划。`
         : BUILD_SWITCH,
       synthetic: true,
     })
@@ -80,8 +80,8 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
     type: "text",
     text: PLAN_MODE.replace("${planInfo}", () =>
       exists
-        ? `A plan file already exists at ${plan}. You can read it and make incremental edits using the edit tool.`
-        : `No plan file exists yet. You should create your plan at ${plan} using the write tool.`,
+        ? `计划文件已存在于 ${plan}。你可以读取它，并使用 edit 工具进行增量编辑。`
+        : `目前还没有计划文件。你应该使用 write 工具在 ${plan} 创建计划。`,
     ),
     synthetic: true,
   })

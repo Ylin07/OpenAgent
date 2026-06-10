@@ -278,18 +278,18 @@ export const layer: Layer.Layer<
 
     const describeSkill = Effect.fn("ToolRegistry.describeSkill")(function* (agent: Agent.Info) {
       const list = yield* skill.available(agent)
-      if (list.length === 0) return "No skills are currently available."
+      if (list.length === 0) return "当前没有可用 skills。"
       return [
-        "Load a specialized skill that provides domain-specific instructions and workflows.",
+        "加载提供领域专属指令和工作流的 specialized skill。",
         "",
-        "When you recognize that a task matches one of the available skills listed below, use this tool to load the full skill instructions.",
+        "当你识别出任务匹配下面列出的某个可用 skill 时，使用此工具加载完整 skill instructions。",
         "",
-        "The skill will inject detailed instructions, workflows, and access to bundled resources (scripts, references, templates) into the conversation context.",
+        "该 skill 会将详细指令、工作流以及 bundled resources（scripts、references、templates）的访问方式注入对话上下文。",
         "",
-        'Tool output includes a `<skill_content name="...">` block with the loaded content.',
+        '工具输出会包含一个 `<skill_content name="...">` block，其中是加载的内容。',
         "",
-        "The following skills provide specialized sets of instructions for particular tasks",
-        "Invoke this tool to load a skill when a task matches one of the available skills listed below:",
+        "以下 skills 为特定任务提供专门指令集",
+        "当任务匹配下面列出的某个可用 skill 时，调用此工具加载该 skill：",
         "",
         Skill.fmt(list, { verbose: false }),
       ].join("\n")
@@ -304,10 +304,10 @@ export const layer: Layer.Layer<
       const description = list
         .map(
           (item) =>
-            `- ${item.name}: ${item.description ?? "This subagent should only be called manually by the user."}`,
+            `- ${item.name}: ${item.description ?? "此 subagent 只应由用户手动调用。"}`,
         )
         .join("\n")
-      return ["Available agent types and the tools they have access to:", description].join("\n")
+      return ["可用 agent types 及其可访问的工具：", description].join("\n")
     })
 
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {

@@ -128,7 +128,7 @@ export const layer = Layer.effect(
         const agents: Record<string, Info> = {
           build: {
             name: "build",
-            description: "The default agent. Executes tools based on configured permissions.",
+            description: "默认 agent。根据已配置权限执行工具。",
             options: {},
             permission: Permission.merge(
               defaults,
@@ -143,7 +143,7 @@ export const layer = Layer.effect(
           },
           plan: {
             name: "plan",
-            description: "Plan mode. Disallows all edit tools.",
+            description: "计划模式。禁止所有编辑工具。",
             options: {},
             permission: Permission.merge(
               defaults,
@@ -166,7 +166,7 @@ export const layer = Layer.effect(
           },
           general: {
             name: "general",
-            description: `General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel.`,
+            description: `通用 agent，用于研究复杂问题并执行多步骤任务。使用此 agent 并行执行多个工作单元。`,
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
@@ -195,7 +195,7 @@ export const layer = Layer.effect(
               }),
               user,
             ),
-            description: `Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.`,
+            description: `专门用于探索代码库的快速 agent。当你需要按 pattern 快速查找文件（例如 "src/components/**/*.tsx"）、按关键词搜索代码（例如 "API endpoints"），或回答代码库相关问题（例如 "API endpoints 如何工作？"）时使用。调用此 agent 时，指定期望的 thoroughness level："quick" 表示基础搜索，"medium" 表示中等程度探索，"very thorough" 表示跨多个位置和命名约定的全面分析。`,
             prompt: PROMPT_EXPLORE,
             options: {},
             mode: "subagent",
@@ -390,7 +390,7 @@ export const layer = Layer.effect(
                 )),
             {
               role: "user",
-              content: `Create an agent configuration based on this request: "${input.description}".\n\nIMPORTANT: The following identifiers already exist and must NOT be used: ${existing.map((i) => i.name).join(", ")}\n  Return ONLY the JSON object, no other text, do not wrap in backticks`,
+              content: `基于此请求创建 agent configuration："${input.description}"。\n\n重要：以下 identifiers 已存在，绝不能使用：${existing.map((i) => i.name).join(", ")}\n  只返回 JSON object，不要返回其他文本，也不要用 backticks 包裹`,
             },
           ],
           model: language,

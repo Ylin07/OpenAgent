@@ -1218,7 +1218,7 @@ export function Session() {
     bindings: [
       {
         key: "shift+tab",
-        desc: "Switch shell mode",
+        desc: "Switch tools/shell panel",
         group: "Session",
         cmd: () => setShellMode((mode) => (mode === "agent" ? "user" : "agent")),
       },
@@ -1727,8 +1727,8 @@ function TerminalWorkspacePanel(props: {
   scrollAcceleration: ReturnType<typeof getScrollAcceleration>
 }) {
   const { theme } = useTheme()
-  const [expandedAgentShells, setExpandedAgentShells] = createSignal(new Set<string>())
-  const shellTools = createMemo(() =>
+  const [expandedAgentTools, setExpandedAgentTools] = createSignal(new Set<string>())
+  const agentTools = createMemo(() =>
     props.messages
       .flatMap((message, messageIndex) => {
         if (message.role !== "assistant") return []
@@ -1741,12 +1741,18 @@ function TerminalWorkspacePanel(props: {
             order: messageIndex * 10_000 + partIndex,
           }))
       })
-      .filter((t) => t.part.tool === "shell" || t.part.tool === "bash")
       .toSorted((a, b) => terminalToolTime(b.part) - terminalToolTime(a.part) || b.order - a.order),
   )
 
-  function toggleAgentShell(callID: string) {
-    setExpandedAgentShells((prev) => {
+  const agentToolStatus = createMemo(() => {
+    const tools = agentTools()
+    const running = tools.filter((item) => item.part.state.status === "running").length
+    if (!running) return `${tools.length} tools`
+    return `${running} running / ${tools.length} tools`
+  })
+
+  function toggleAgentTool(callID: string) {
+    setExpandedAgentTools((prev) => {
       const next = new Set(prev)
       if (next.has(callID)) next.delete(callID)
       else next.add(callID)
@@ -1772,7 +1778,9 @@ function TerminalWorkspacePanel(props: {
         border={["bottom"]}
         borderColor={theme.borderSubtle}
       >
-        <text fg={theme.textMuted}>terminal://workspace split-2</text>
+        <text fg={theme.textMuted}>
+          {props.mode === "agent" ? "tools://session split-2" : "terminal://workspace split-2"}
+        </text>
         <text fg={theme.textMuted}>
           <span style={{ fg: props.mode === "agent" ? theme.warning : theme.info }}>{props.mode.toUpperCase()}</span>{" "}
           shift+tab
@@ -1780,7 +1788,7 @@ function TerminalWorkspacePanel(props: {
       </box>
       <box flexGrow={1} minHeight={0}>
         <box position="absolute" top={0} left={0} right={0} bottom={0} visible={props.mode === "agent"}>
-          <TerminalPane title="AGENT" status={`${shellTools().length} shell`}>
+          <TerminalPane title="TOOLS" status={agentToolStatus()}>
             <scrollbox
               flexGrow={1}
               minHeight={0}
@@ -1788,17 +1796,14 @@ function TerminalWorkspacePanel(props: {
               paddingRight={1}
               scrollAcceleration={props.scrollAcceleration}
             >
-              <Show
-                when={shellTools().length > 0}
-                fallback={<text fg={theme.textMuted}>$ no workspace shell commands</text>}
-              >
-                <For each={shellTools()}>
+              <Show when={agentTools().length > 0} fallback={<text fg={theme.textMuted}>no tool calls yet</text>}>
+                <For each={agentTools()}>
                   {(item) => (
                     <TerminalToolBlock
                       part={item.part}
                       width={props.width}
-                      expanded={expandedAgentShells().has(item.part.callID)}
-                      onToggle={() => toggleAgentShell(item.part.callID)}
+                      expanded={expandedAgentTools().has(item.part.callID)}
+                      onToggle={() => toggleAgentTool(item.part.callID)}
                     />
                   )}
                 </For>
@@ -2193,7 +2198,10 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
     return ""
   })
   const collapsed = createMemo(() => collapseToolOutput(rawOutput(), 8, Math.max(80, props.width * 4)))
-  const title = createMemo(() => terminalCommandTitle(props.part.tool, inputData(), metadata()))
+  const stateTitle = createMemo(() => ("title" in props.part.state ? props.part.state.title : undefined))
+  const title = createMemo(() => terminalCommandTitle(props.part.tool, inputData(), metadata(), stateTitle()))
+  const titlePrefix = createMemo(() => terminalToolPrefix(props.part.tool))
+  const inputSummary = createMemo(() => terminalInputSummary(inputData()))
   const compactTitle = createMemo(() => Locale.truncate(title(), Math.max(12, props.width - 8)))
   const statusColor = createMemo(() => {
     if (props.part.state.status === "completed") return theme.success
@@ -2206,7 +2214,7 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
     <box marginTop={1} flexShrink={0}>
       <box flexDirection="row" justifyContent="space-between" gap={1} onMouseUp={props.onToggle}>
         <text fg={theme.info} wrapMode="none">
-          {props.expanded ? "-" : "+"} $ {compactTitle()}
+          {props.expanded ? "-" : "+"} {titlePrefix()} {compactTitle()}
         </text>
         <text fg={statusColor()} wrapMode="none">
           ■
@@ -2214,7 +2222,12 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
       </box>
       <Show when={props.expanded}>
         <box border={["left"]} borderColor={theme.borderSubtle} paddingLeft={1}>
-          <text fg={theme.info}>$ {title()}</text>
+          <text fg={theme.info}>
+            {titlePrefix()} {title()}
+          </text>
+          <Show when={props.part.tool !== ShellID.ToolID && props.part.tool !== "bash" && inputSummary()}>
+            <text fg={theme.textMuted}>{inputSummary()}</text>
+          </Show>
           <Show when={rawOutput()} fallback={<text fg={theme.textMuted}>waiting for output</text>}>
             <text fg={theme.text}>{collapsed().output}</text>
             <Show when={collapsed().overflow}>
@@ -2227,8 +2240,18 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
   )
 }
 
-function terminalCommandTitle(tool: string, inputData: any, metadata: any) {
+function terminalToolPrefix(tool: string) {
+  if (tool === ShellID.ToolID || tool === "bash") return "$"
+  return ">"
+}
+
+function terminalCommandTitle(tool: string, inputData: any, metadata: any, stateTitle?: string) {
   if (tool === ShellID.ToolID) return inputData?.command ?? "shell"
+  if (tool === "bash") return inputData?.command ?? "bash"
+  if (typeof stateTitle === "string") return stateTitle
+  if (typeof metadata?.title === "string") return metadata.title
+  if (typeof inputData?.title === "string") return inputData.title
+  if (tool.startsWith("ctf_")) return `${tool} ${ctfToolTarget(inputData)}`.trim()
   if (tool === "apply_patch") return "apply_patch"
   if (tool === "edit") return `edit ${inputData?.filePath ?? ""}`.trim()
   if (tool === "write") return `write ${inputData?.filePath ?? ""}`.trim()
@@ -2237,6 +2260,30 @@ function terminalCommandTitle(tool: string, inputData: any, metadata: any) {
   if (tool === "glob") return `glob ${inputData?.pattern ?? ""}`.trim()
   if (tool === "task") return `task ${metadata?.description ?? inputData?.description ?? ""}`.trim()
   return tool
+}
+
+function ctfToolTarget(inputData: any) {
+  if (!inputData || typeof inputData !== "object") return ""
+  const value =
+    inputData.binary ??
+    inputData.target ??
+    inputData.path ??
+    inputData.script ??
+    inputData.remoteHost ??
+    inputData.action ??
+    inputData.category
+  if (value === undefined) return ""
+  if (typeof value === "string") return value
+  return String(value)
+}
+
+function terminalInputSummary(inputData: any) {
+  if (!inputData || typeof inputData !== "object") return ""
+  const entries = Object.entries(inputData)
+    .filter(([, value]) => value !== undefined && value !== "" && typeof value !== "object")
+    .slice(0, 8)
+  if (!entries.length) return ""
+  return entries.map(([key, value]) => `${key}=${String(value)}`).join(" ")
 }
 
 function AssistantMessage(props: {

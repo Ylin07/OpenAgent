@@ -1,44 +1,44 @@
-Create and maintain a structured task list for the current coding session. Tracks progress, organizes multi-step work, and surfaces status to the user.
+为当前编码会话创建并维护结构化任务列表。它用于跟踪进度、组织多步骤工作，并向用户展示状态。
 
-## When to use
-Use proactively when:
-- The task requires 3+ distinct steps or actions (not just 3 tool calls for a single conceptual step)
-- The work is non-trivial and benefits from planning
-- The user provides multiple tasks (numbered or comma-separated) or explicitly asks for a todo list
-- New instructions arrive - capture them as todos
-- You start a task - mark it `in_progress` (only one at a time) before working
-- You finish a task - mark it `completed` and add any follow-ups discovered during the work
+## 何时使用
+在以下情况主动使用：
+- 任务需要 3 个以上不同步骤或动作（不是同一概念步骤的 3 次工具调用）
+- 工作并非平凡任务，且会从规划中受益
+- 用户提供多个任务（编号或逗号分隔）或明确要求 todo list
+- 收到新指令时，将其记录为 todos
+- 开始某个任务前，将它标记为 `in_progress`（同一时间只能有一个）
+- 完成某个任务后，将它标记为 `completed`，并添加工作中发现的后续事项
 
-## When NOT to use
-Skip when:
-- The work is a single, straightforward task (or <3 trivial steps)
-- The request is purely informational or conversational
-- Tracking adds no organizational value
+## 何时不使用
+在以下情况跳过：
+- 工作是单一直接任务（或少于 3 个琐碎步骤）
+- 请求纯粹是信息性或对话性
+- 跟踪不会带来组织价值
 
-## States
-- `pending` - not started
-- `in_progress` - actively working (exactly ONE at a time)
-- `completed` - finished successfully
-- `cancelled` - no longer needed
+## 状态
+- `pending` - 尚未开始
+- `in_progress` - 正在处理（同一时间必须恰好只有一个）
+- `completed` - 已成功完成
+- `cancelled` - 不再需要
 
-## Rules
-- Update status in real time; don't batch completions
-- Mark `completed` only after the required work is actually done, including any required verification. Never based on intent.
-- Keep exactly one `in_progress` while work remains
-- If blocked or partial, keep it `in_progress` and add a follow-up todo describing the blocker
-- Preserve user-provided commands verbatim (flags, args, order)
-- Items should be specific and actionable; break large work into smaller steps
+## 规则
+- 实时更新状态；不要把完成状态攒到最后批量更新
+- 只有在所需工作实际完成后（包括所有必要验证）才标记 `completed`。绝不要基于意图标记完成。
+- 只要仍有工作，就保持恰好一个 `in_progress`
+- 如果被阻塞或部分完成，保持 `in_progress`，并添加一个描述阻塞原因的 follow-up todo
+- 原样保留用户提供的命令（flags、args、顺序）
+- 条目应具体且可执行；将大型工作拆成更小步骤
 
-## Examples
+## 示例
 
-Use it:
-- "Add a dark mode toggle and run the tests" -> multi-step feature + explicit verification
-- "Rename getCwd -> getCurrentWorkingDirectory across the repo" -> grep reveals 15 occurrences in 8 files
-- "Implement registration, catalog, cart, checkout" -> multiple complex features
+使用：
+- "Add a dark mode toggle and run the tests" -> 多步骤功能 + 明确验证
+- "Rename getCwd -> getCurrentWorkingDirectory across the repo" -> grep 显示 8 个文件中有 15 处
+- "Implement registration, catalog, cart, checkout" -> 多个复杂功能
 
-Skip it:
-- "How do I print Hello World in Python?" -> informational
-- "Add a comment to calculateTotal" -> single edit
-- "Run npm install and tell me what happened" -> one command
+跳过：
+- "How do I print Hello World in Python?" -> 信息性问题
+- "Add a comment to calculateTotal" -> 单次编辑
+- "Run npm install and tell me what happened" -> 一个命令
 
-When in doubt, use it.
+拿不准时，使用它。

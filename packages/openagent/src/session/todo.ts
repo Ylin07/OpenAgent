@@ -8,11 +8,11 @@ import { EventV2Bridge } from "@/event-v2-bridge"
 import { EventV2 } from "@openagent-ai/core/event"
 
 export const Info = Schema.Struct({
-  content: Schema.String.annotate({ description: "Brief description of the task" }),
+  content: Schema.String.annotate({ description: "任务简短描述" }),
   status: Schema.String.annotate({
-    description: "Current status of the task: pending, in_progress, completed, cancelled",
+    description: "任务当前状态：pending、in_progress、completed、cancelled",
   }),
-  priority: Schema.String.annotate({ description: "Priority level of the task: high, medium, low" }),
+  priority: Schema.String.annotate({ description: "任务优先级：high、medium、low" }),
 }).annotate({ identifier: "Todo" })
 export type Info = Schema.Schema.Type<typeof Info>
 
