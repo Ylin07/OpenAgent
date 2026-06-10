@@ -7,7 +7,7 @@ import * as Log from "@openagent-ai/core/util/log"
 import { containsPath, type InstanceContext } from "../project/instance-context"
 import { InstanceState } from "@/effect/instance-state"
 import { lazy } from "@/util/lazy"
-import { Language, type Node } from "web-tree-sitter"
+import type { Node } from "web-tree-sitter"
 
 import { FSUtil } from "@openagent-ai/core/fs-util"
 import { fileURLToPath } from "url"
@@ -318,7 +318,7 @@ function cmd(shell: string, command: string, cwd: string, env: NodeJS.ProcessEnv
   })
 }
 const parser = lazy(async () => {
-  const { Parser } = await import("web-tree-sitter")
+  const { Language, Parser } = await import("web-tree-sitter")
   const { default: treeWasm } = await import("web-tree-sitter/tree-sitter.wasm" as string, {
     with: { type: "wasm" },
   })

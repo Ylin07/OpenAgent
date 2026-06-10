@@ -11,7 +11,7 @@ import { createClient } from "@hey-api/openapi-ts"
 
 const openagent = path.resolve(dir, "../../openagent")
 
-await $`bun dev generate > ${dir}/openapi.json`.cwd(openagent)
+await $`bun run --conditions=browser ./src/index.ts generate > ${dir}/openapi.json`.cwd(openagent)
 
 await createClient({
   input: "./openapi.json",
@@ -58,8 +58,8 @@ if (sseTypesPatched === sseTypesSource) {
 }
 await Bun.write(sseTypesPath, sseTypesPatched)
 
-await $`bun prettier --write src/gen`
-await $`bun prettier --write src/v2`
+await $`bun x prettier --write src/gen`
+await $`bun x prettier --write src/v2`
 await $`rm -rf dist`
 await $`bun tsc`
-await $`rm openapi.json`
+await $`rm -f openapi.json`

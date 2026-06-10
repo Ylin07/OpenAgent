@@ -26,11 +26,8 @@
     }
   },
   "devDependencies": {
-    "@octokit/webhooks-types": "7.6.1",
     "@openagent-ai/core": "workspace:*",
-    "@standard-schema/spec": "1.0.0",
     "@tsconfig/bun": "catalog:",
-    "@types/babel__core": "7.20.5",
     "@types/bun": "catalog:",
     "@types/cross-spawn": "catalog:",
     "@types/mime-types": "3.0.1",
@@ -39,9 +36,6 @@
     "@types/turndown": "5.0.5",
     "@types/yargs": "17.0.33",
     "@typescript/native-preview": "catalog:",
-    "drizzle-orm": "catalog:",
-    "prettier": "3.6.2",
-    "typescript": "catalog:",
     "vscode-languageserver-types": "3.17.5"
   },
   "dependencies": {
@@ -56,7 +50,6 @@
     "@openagent-ai/plugin": "workspace:*",
     "@openagent-ai/sdk": "workspace:*",
     "@openagent-ai/server": "workspace:*",
-    "@openagent-ai/ui": "workspace:*",
     "@opentui/core": "catalog:",
     "@opentui/keymap": "catalog:",
     "@opentui/solid": "catalog:",

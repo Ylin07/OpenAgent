@@ -127,7 +127,6 @@ const getCopyMethod = lazy(async () => {
   const which = await getWhich()
 
   if (os === "darwin" && which("osascript")) {
-    console.log("clipboard: using osascript")
     return async (text: string) => {
       const escaped = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
       await Process.run(["osascript", "-e", `set the clipboard to "${escaped}"`], { nothrow: true })
@@ -136,21 +135,17 @@ const getCopyMethod = lazy(async () => {
 
   if (os === "linux") {
     if (process.env["WAYLAND_DISPLAY"] && which("wl-copy")) {
-      console.log("clipboard: using wl-copy")
       return (text: string) => writeWithStdin(["wl-copy"], text)
     }
     if (which("xclip")) {
-      console.log("clipboard: using xclip")
       return (text: string) => writeWithStdin(["xclip", "-selection", "clipboard"], text)
     }
     if (which("xsel")) {
-      console.log("clipboard: using xsel")
       return (text: string) => writeWithStdin(["xsel", "--clipboard", "--input"], text)
     }
   }
 
   if (os === "win32") {
-    console.log("clipboard: using powershell")
     return (text: string) =>
       // Pipe via stdin to avoid PowerShell string interpolation ($env:FOO, $(), etc.)
       writeWithStdin(
@@ -165,7 +160,6 @@ const getCopyMethod = lazy(async () => {
       )
   }
 
-  console.log("clipboard: no native support")
   return async (text: string) => {
     const clipboardy = await getClipboardy()
     await clipboardy.write(text).catch(() => {})

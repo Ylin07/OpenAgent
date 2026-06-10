@@ -27,7 +27,6 @@ import { createSyntaxStyleMemo, generateSubtleSyntax, selectedForeground, useThe
 import {
   BoxRenderable,
   ScrollBoxRenderable,
-  addDefaultParsers,
   TextAttributes,
   RGBA,
   type KeyEvent,
@@ -75,7 +74,6 @@ import { DialogSessionList } from "../../component/dialog-session-list"
 import { Sidebar } from "./sidebar"
 import { SubagentFooter } from "./subagent-footer.tsx"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
-import parsers from "../../../../../../parsers-config.ts"
 import * as Clipboard from "../../util/clipboard"
 import { errorMessage } from "@/util/error"
 import { Toast, useToast } from "../../ui/toast"
@@ -104,8 +102,6 @@ import { OPENAGENT_BASE_MODE, useBindings, useCommandShortcut, useOpenAgentKeyma
 import { PathFormatterProvider, usePathFormatter } from "../../context/path-format"
 import { spawn as spawnPty, type Disp as PtyDisp, type Proc as PtyProc } from "@openagent-ai/core/pty/pty.bun"
 import { refreshSessionTabs, removeSessionTab, upsertSessionTab, type SessionTab, type SessionTabSource } from "./session-tabs"
-
-addDefaultParsers(parsers.parsers)
 
 let persistedSessionTabs: SessionTab[] = []
 

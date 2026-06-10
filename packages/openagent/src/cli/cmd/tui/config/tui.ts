@@ -1,28 +1,22 @@
 export * as TuiConfig from "./tui"
 
-import path from "path"
 import { createBindingLookup } from "@opentui/keymap/extras"
 import { mergeDeep, unique } from "remeda"
-import { Cause, Context, Effect, Fiber, Layer, Schema } from "effect"
+import { Cause, Context, Effect, Layer, Schema } from "effect"
 import { ConfigParse } from "@/config/parse"
 import * as ConfigPaths from "@/config/paths"
 import { migrateTuiConfig } from "./tui-migrate"
-import { KeymapLeaderTimeoutDefault, resolveAttentionSoundPaths, TuiInfo } from "./tui-schema"
+import { KeymapLeaderTimeoutDefault, TuiInfo } from "./tui-schema"
 import { Flag } from "@openagent-ai/core/flag/flag"
 import { isRecord } from "@/util/record"
 import { Global } from "@openagent-ai/core/global"
 import { FSUtil } from "@openagent-ai/core/fs-util"
 import { CurrentWorkingDirectory } from "./cwd"
-import { ConfigPlugin } from "@/config/plugin"
 import { TuiKeybind } from "./keybind"
-import { InstallationLocal, InstallationVersion } from "@openagent-ai/core/installation/version"
 import { makeRuntime } from "@openagent-ai/core/effect/runtime"
-import { Filesystem } from "@/util/filesystem"
 import * as Log from "@openagent-ai/core/util/log"
 import { ConfigVariable } from "@/config/variable"
-import { Npm } from "@openagent-ai/core/npm"
 import type { DeepMutable } from "@openagent-ai/core/schema"
-import type { TuiAttentionSoundName } from "@openagent-ai/plugin/tui"
 import { FormatError, FormatUnknownError } from "@/cli/error"
 
 const log = Log.create({ service: "tui.config" })
@@ -32,22 +26,11 @@ export type Info = DeepMutable<Schema.Schema.Type<typeof Info>>
 
 type Acc = {
   result: Info
-  plugin_origins: ConfigPlugin.Origin[]
 }
 
-export type Resolved = Omit<Info, "attention" | "keybinds" | "leader_timeout"> & {
-  attention: {
-    enabled: boolean
-    notifications: boolean
-    sound: boolean
-    volume: number
-    sound_pack: string
-    sounds: Partial<Record<TuiAttentionSoundName, string>>
-  }
+export type Resolved = Omit<Info, "keybinds" | "leader_timeout"> & {
   keybinds: TuiKeybind.BindingLookupView
   leader_timeout: number
-  // Internal resolved plugin list used by runtime loading.
-  plugin_origins?: ConfigPlugin.Origin[]
 }
 
 export interface Interface {
@@ -56,12 +39,6 @@ export interface Interface {
 }
 
 export class Service extends Context.Service<Service, Interface>()("@openagent/TuiConfig") {}
-
-function pluginScope(file: string, ctx: { directory: string }): ConfigPlugin.Scope {
-  if (Filesystem.contains(ctx.directory, file)) return "local"
-  // if (ctx.worktree !== "/" && Filesystem.contains(ctx.worktree, file)) return "local"
-  return "global"
-}
 
 function normalize(raw: Record<string, unknown>) {
   const data = { ...raw }
@@ -100,16 +77,6 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
   const afs = yield* FSUtil.Service
   let appliedOrder = 0
 
-  const resolvePlugins = (config: Info, configFilepath: string): Effect.Effect<Info> =>
-    Effect.gen(function* () {
-      const plugins = config.plugin
-      if (!plugins) return config
-      for (let i = 0; i < plugins.length; i++) {
-        plugins[i] = yield* Effect.promise(() => ConfigPlugin.resolvePluginSpec(plugins[i], configFilepath))
-      }
-      return config
-    })
-
   const load = (text: string, configFilepath: string): Effect.Effect<Info> =>
     Effect.gen(function* () {
       const expanded = yield* Effect.promise(() =>
@@ -120,20 +87,10 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
       // Flatten a nested "tui" key so users who wrote `{ "tui": { ... } }` inside tui.json
       // (mirroring the old app config shape) still get their settings applied.
       const normalized = dropUnknownKeybinds(normalize(data), configFilepath)
-      const parsed = ConfigParse.schema(Info, normalized, configFilepath)
-      const validated = parsed.attention?.sounds
-        ? {
-            ...parsed,
-            attention: {
-              ...parsed.attention,
-              sounds: resolveAttentionSoundPaths(path.dirname(configFilepath), parsed.attention.sounds),
-            },
-          }
-        : parsed
-      return yield* resolvePlugins(validated, configFilepath)
+      return ConfigParse.schema(Info, normalized, configFilepath)
     }).pipe(
       // catchCause (not tapErrorCause + orElseSucceed) because JSONC parsing and validation
-      // can sync-throw — those become defects, which orElseSucceed wouldn't catch.
+      // can sync-throw - those become defects, which orElseSucceed wouldn't catch.
       Effect.catchCause((cause) =>
         Effect.sync(() => {
           const error = Cause.squash(cause)
@@ -178,15 +135,6 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
         log.info("applying tui config", { path: file, order: appliedOrder })
       }
       acc.result = mergeDeep(acc.result, data)
-      if (!data.plugin?.length) return
-
-      const scope = pluginScope(file, ctx)
-      const plugins = ConfigPlugin.deduplicatePluginOrigins([
-        ...acc.plugin_origins,
-        ...data.plugin.map((spec) => ({ spec, scope, source: file })),
-      ])
-      acc.result.plugin = plugins.map((item) => item.spec)
-      acc.plugin_origins = plugins
     })
 
   // Every config dir we may read from: global config dir, any app-specific
@@ -198,7 +146,6 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
 
   const acc: Acc = {
     result: {},
-    plugin_origins: [],
   }
 
   // 1. Global tui config (lowest precedence).
@@ -242,25 +189,15 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
   const parsedKeybinds = TuiKeybind.parse(keybinds)
   const result: Resolved = {
     ...acc.result,
-    attention: {
-      enabled: acc.result.attention?.enabled ?? false,
-      notifications: acc.result.attention?.notifications ?? true,
-      sound: acc.result.attention?.sound ?? true,
-      volume: acc.result.attention?.volume ?? 0.4,
-      sound_pack: acc.result.attention?.sound_pack ?? "openagent.default",
-      sounds: acc.result.attention?.sounds ?? {},
-    },
     keybinds: createBindingLookup(TuiKeybind.toBindingConfig(parsedKeybinds), {
       commandMap: TuiKeybind.CommandMap,
       bindingDefaults: TuiKeybind.bindingDefaults(),
     }),
     leader_timeout: acc.result.leader_timeout ?? KeymapLeaderTimeoutDefault,
-    plugin_origins: acc.plugin_origins.length ? acc.plugin_origins : undefined,
   }
 
   return {
     config: result,
-    dirs: result.plugin?.length ? dirs : [],
   }
 })
 
@@ -268,36 +205,16 @@ export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const directory = yield* CurrentWorkingDirectory
-    const npm = yield* Npm.Service
     const data = yield* loadState({ directory })
-    const deps = yield* Effect.forEach(
-      data.dirs,
-      (dir) =>
-        npm
-          .install(dir, {
-            add: [
-              {
-                name: "@openagent-ai/plugin",
-                version: InstallationLocal ? undefined : InstallationVersion,
-              },
-            ],
-          })
-          .pipe(Effect.forkScoped),
-      {
-        concurrency: "unbounded",
-      },
-    )
 
     const get = Effect.fn("TuiConfig.get")(() => Effect.succeed(data.config))
 
-    const waitForDependencies = Effect.fn("TuiConfig.waitForDependencies")(() =>
-      Effect.forEach(deps, Fiber.join, { concurrency: "unbounded" }).pipe(Effect.ignore(), Effect.asVoid),
-    )
+    const waitForDependencies = Effect.fn("TuiConfig.waitForDependencies")(() => Effect.void)
     return Service.of({ get, waitForDependencies })
   }).pipe(Effect.withSpan("TuiConfig.layer")),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(Npm.defaultLayer), Layer.provide(FSUtil.defaultLayer))
+export const defaultLayer = layer.pipe(Layer.provide(FSUtil.defaultLayer))
 
 const { runPromise } = makeRuntime(Service, defaultLayer)
 

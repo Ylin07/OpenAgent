@@ -92,6 +92,14 @@ const cli = yargs(args)
   })
   .usage("")
   .completion("completion", "generate shell completion script")
+  .command({
+    command: "generate",
+    describe: false,
+    handler: async () => {
+      const { Server } = await import("./server/server")
+      process.stdout.write(JSON.stringify(await Server.openapi()))
+    },
+  })
   .command(TuiThreadCommand)
   .command(AttachCommand)
   .fail((msg, err) => {

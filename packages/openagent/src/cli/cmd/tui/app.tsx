@@ -2,7 +2,6 @@ import { render, TimeToFirstDraw, useRenderer, useTerminalDimensions } from "@op
 import { createDefaultOpenTuiKeymap } from "@opentui/keymap/opentui"
 import * as Clipboard from "@tui/util/clipboard"
 import * as Selection from "@tui/util/selection"
-import * as TuiAudio from "@tui/util/audio"
 import { createCliRenderer, MouseButton, type CliRenderer, type CliRendererConfig } from "@opentui/core"
 import { RouteProvider, useRoute } from "@tui/context/route"
 import {
@@ -24,7 +23,6 @@ import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { DialogProvider as DialogProviderList } from "@tui/component/dialog-provider"
 import { ErrorComponent } from "@tui/component/error-component"
-import { PluginRouteMissing } from "@tui/component/plugin-route-missing"
 import { ProjectProvider, useProject } from "@tui/context/project"
 import { EditorContextProvider } from "@tui/context/editor"
 import { useEvent } from "@tui/context/event"
@@ -63,9 +61,6 @@ import { PromptRefProvider, usePromptRef } from "./context/prompt"
 import { TuiConfigProvider, useTuiConfig } from "./context/tui-config"
 import { TuiConfig } from "@/cli/cmd/tui/config/tui"
 import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime"
-import { createTuiApi } from "@/cli/cmd/tui/plugin/api"
-import type { RouteMap } from "@/cli/cmd/tui/plugin/api"
-import { createTuiAttention } from "@/cli/cmd/tui/attention"
 import { FormatError, FormatUnknownError } from "@/cli/error"
 import { CommandPaletteDialog } from "./component/command-palette"
 import {
@@ -209,7 +204,6 @@ export function tui(input: TuiInput): TuiHandle {
     cleanup: async () => {
       unregisterKeymap()
       await TuiPluginRuntime.dispose()
-      TuiAudio.dispose()
     },
   })
   const ready = mountTui({ ...input, keymap, exit: lifecycle.exit }).catch((error) => lifecycle.fail(error))
@@ -385,38 +379,10 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   const project = useProject()
   const exit = useExit()
   const promptRef = usePromptRef()
-  const routes: RouteMap = new Map()
-  const [routeRev, setRouteRev] = createSignal(0)
-  const routeView = (name: string) => {
-    routeRev()
-    return routes.get(name)?.at(-1)?.render
-  }
-  const attention = createTuiAttention({ renderer, config: tuiConfig, kv })
-
-  const api = createTuiApi({
-    tuiConfig,
-    dialog,
-    keymap,
-    kv,
-    route,
-    routes,
-    bump: () => setRouteRev((x) => x + 1),
-    event,
-    sdk,
-    sync,
-    theme: themeState,
-    toast,
-    renderer,
-    attention,
-  })
   const [ready, setReady] = createSignal(false)
-  TuiPluginRuntime.init({
-    api,
-    config: tuiConfig,
-    dispose: () => attention.dispose(),
-  })
+  TuiPluginRuntime.init()
     .catch((error) => {
-      console.error("Failed to load TUI plugins", error)
+      console.error("Failed to initialize TUI runtime", error)
     })
     .finally(() => {
       setReady(true)
@@ -433,7 +399,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   )
   onCleanup(() => {
     offSelectionKeys()
-    attention.dispose()
   })
 
   // Wire up console copy-to-clipboard via opentui's onCopySelection callback
@@ -1014,7 +979,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   })
 
   event.on("installation.update-available", async (evt) => {
-    console.log("installation.update-available", evt)
     const version = evt.properties.version
 
     const skipped = kv.get("skipped_version")
@@ -1061,14 +1025,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     void exit()
   })
 
-  const plugin = createMemo(() => {
-    if (!ready()) return
-    if (route.data.type !== "plugin") return
-    const render = routeView(route.data.id)
-    if (!render) return <PluginRouteMissing id={route.data.id} onHome={() => route.navigate({ type: "home" })} />
-    return render({ params: route.data.data })
-  })
-
   return (
     <box
       width={dimensions().width}
@@ -1100,7 +1056,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
               </Show>
             </Match>
           </Switch>
-          {plugin()}
         </box>
         <box flexShrink={0}>
           <TuiPluginRuntime.Slot name="app_bottom" />
