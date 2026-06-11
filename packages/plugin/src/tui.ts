@@ -358,10 +358,6 @@ export type TuiThemeCurrent = {
 
 export type TuiTheme = {
   readonly current: TuiThemeCurrent
-  readonly selected: string
-  has: (name: string) => boolean
-  set: (name: string) => boolean
-  install: (jsonPath: string) => Promise<void>
   mode: () => "dark" | "light"
   readonly ready: boolean
 }
@@ -416,7 +412,7 @@ type TuiAttentionConfigView = {
   sounds: Partial<Record<TuiAttentionSoundName, string>>
 }
 
-type TuiConfigView = Pick<PluginConfig, "$schema" | "theme" | "plugin"> &
+type TuiConfigView = Pick<PluginConfig, "$schema" | "plugin"> &
   NonNullable<PluginConfig["tui"]> & {
     leader_timeout: number
     attention: TuiAttentionConfigView

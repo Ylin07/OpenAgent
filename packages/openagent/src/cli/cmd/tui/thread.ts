@@ -12,7 +12,6 @@ import { Filesystem } from "@/util/filesystem"
 import type { GlobalEvent } from "@openagent-ai/sdk/v2"
 import type { EventSource } from "./context/sdk"
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32"
-import { writeHeapSnapshot } from "v8"
 import {
   OPENAGENT_PROCESS_ROLE,
   OPENAGENT_RUN_ID,
@@ -231,11 +230,6 @@ export const TuiThreadCommand = cmd({
         const handle = tui({
           url: transport.url,
           renderer,
-          async onSnapshot() {
-            const tui = writeHeapSnapshot("tui.heapsnapshot")
-            const server = await client.call("snapshot", undefined)
-            return [tui, server]
-          },
           config,
           directory: cwd,
           fetch: transport.fetch,

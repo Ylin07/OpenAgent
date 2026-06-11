@@ -13,7 +13,6 @@ const log = Log.create({ service: "tui.migrate" })
 
 const TUI_SCHEMA_URL = "https://openagent.ai/tui.json"
 
-const decodeTheme = Schema.decodeUnknownOption(Schema.String)
 const decodeRecord = Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Unknown))
 const decodeScrollSpeed = Schema.decodeUnknownOption(ScrollSpeed)
 const decodeScrollAcceleration = Schema.decodeUnknownOption(ScrollAcceleration)
@@ -25,7 +24,7 @@ interface MigrateInput {
 }
 
 /**
- * Migrates tui-specific keys (theme, keybinds, tui) from the app config files
+ * Migrates tui-specific keys (keybinds, tui) from the app config files
  * into dedicated tui.json files. Migration is performed per-directory and
  * skips only locations where a tui.json already exists.
  */
@@ -41,16 +40,14 @@ export async function migrateTuiConfig(input: MigrateInput) {
     const data = parseJsonc(source, errors, { allowTrailingComma: true })
     if (errors.length || !data || typeof data !== "object" || Array.isArray(data)) continue
 
-    const theme = decodeTheme("theme" in data ? data.theme : undefined)
     const keybinds = decodeRecord("keybinds" in data ? data.keybinds : undefined)
     const legacyTui = decodeRecord("tui" in data ? data.tui : undefined)
     const extracted = {
-      theme: Option.getOrUndefined(theme),
       keybinds: Option.getOrUndefined(keybinds),
       tui: Option.getOrUndefined(legacyTui),
     }
     const tui = extracted.tui ? normalizeTui(extracted.tui) : undefined
-    if (extracted.theme === undefined && extracted.keybinds === undefined && !tui) continue
+    if (extracted.keybinds === undefined && !tui) continue
 
     const target = path.join(path.dirname(file), "tui.json")
     const targetExists = await Filesystem.exists(target)
@@ -59,7 +56,6 @@ export async function migrateTuiConfig(input: MigrateInput) {
     const payload: Record<string, unknown> = {
       $schema: TUI_SCHEMA_URL,
     }
-    if (extracted.theme !== undefined) payload.theme = extracted.theme
     if (extracted.keybinds !== undefined) payload.keybinds = extracted.keybinds
     if (tui) Object.assign(payload, tui)
 

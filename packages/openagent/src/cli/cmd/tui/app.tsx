@@ -27,7 +27,6 @@ import { ProjectProvider, useProject } from "@tui/context/project"
 import { EditorContextProvider } from "@tui/context/editor"
 import { useEvent } from "@tui/context/event"
 import { SDKProvider, useSDK } from "@tui/context/sdk"
-import { StartupLoading } from "@tui/component/startup-loading"
 import { SyncProvider, useSync } from "@tui/context/sync"
 import { SyncProviderV2 } from "@tui/context/sync-v2"
 import { LocalProvider, useLocal } from "@tui/context/local"
@@ -35,7 +34,6 @@ import { DialogModel } from "@tui/component/dialog-model"
 import { useConnected } from "@tui/component/use-connected"
 import { DialogMcp } from "@tui/component/dialog-mcp"
 import { DialogStatus } from "@tui/component/dialog-status"
-import { DialogThemeList } from "@tui/component/dialog-theme-list"
 import { DialogHelp } from "./ui/dialog-help"
 import { DialogAgent } from "@tui/component/dialog-agent"
 import { DialogSessionList } from "@tui/component/dialog-session-list"
@@ -56,11 +54,9 @@ import { TuiEvent } from "./event"
 import { KVProvider, useKV } from "./context/kv"
 import { Provider } from "@/provider/provider"
 import { ArgsProvider, useArgs, type Args } from "./context/args"
-import open from "open"
 import { PromptRefProvider, usePromptRef } from "./context/prompt"
 import { TuiConfigProvider, useTuiConfig } from "./context/tui-config"
 import { TuiConfig } from "@/cli/cmd/tui/config/tui"
-import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime"
 import { FormatError, FormatUnknownError } from "@/cli/error"
 import { CommandPaletteDialog } from "./component/command-palette"
 import {
@@ -105,18 +101,11 @@ const appBindingCommands = [
   "provider.connect",
   "console.org.switch",
   "openagent.status",
-  "theme.switch",
   "theme.switch_mode",
-  "theme.mode.lock",
   "help.show",
-  "docs.open",
   "workspace.list",
-  "app.debug",
-  "app.console",
-  "app.heap_snapshot",
   "terminal.suspend",
   "terminal.title.toggle",
-  "app.toggle.animations",
   "app.toggle.file_context",
   "app.toggle.diffwrap",
   "app.toggle.paste_summary",
@@ -161,7 +150,6 @@ type TuiInput = {
   args: Args
   config: TuiConfig.Resolved
   renderer: CliRenderer
-  onSnapshot?: () => Promise<string[]>
   directory?: string
   fetch?: typeof fetch
   headers?: RequestInit["headers"]
@@ -203,7 +191,6 @@ export function tui(input: TuiInput): TuiHandle {
     unguard,
     cleanup: async () => {
       unregisterKeymap()
-      await TuiPluginRuntime.dispose()
     },
   })
   const ready = mountTui({ ...input, keymap, exit: lifecycle.exit }).catch((error) => lifecycle.fail(error))
@@ -214,8 +201,6 @@ export function tui(input: TuiInput): TuiHandle {
 
 async function mountTui(input: TuiInput & { keymap: ReturnType<typeof createDefaultOpenTuiKeymap>; exit: Exit }) {
   const renderer = input.renderer
-  // Prewarm palette before ThemeProvider mounts so `system` theme avoids a first-paint fallback flash.
-  void renderer.getPalette({ size: 16 }).catch(() => undefined)
   const mode = (await renderer.waitForThemeMode(1000)) ?? "dark"
   if (renderer.isDestroyed) return
 
@@ -258,7 +243,7 @@ async function mountTui(input: TuiInput & { keymap: ReturnType<typeof createDefa
                                         <PromptHistoryProvider>
                                           <PromptRefProvider>
                                             <EditorContextProvider>
-                                              <App onSnapshot={input.onSnapshot} />
+                                              <App />
                                             </EditorContextProvider>
                                           </PromptRefProvider>
                                         </PromptHistoryProvider>
@@ -361,7 +346,7 @@ async function waitUntilDone(ready: Promise<void>, exited: Promise<void>) {
   await exited
 }
 
-function App(props: { onSnapshot?: () => Promise<string[]> }) {
+function App() {
   const tuiConfig = useTuiConfig()
   const route = useRoute()
   const dimensions = useTerminalDimensions()
@@ -374,19 +359,11 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   const sdk = useSDK()
   const toast = useToast()
   const themeState = useTheme()
-  const { theme, mode, setMode, locked, lock, unlock } = themeState
+  const { theme, mode, setMode } = themeState
   const sync = useSync()
   const project = useProject()
   const exit = useExit()
   const promptRef = usePromptRef()
-  const [ready, setReady] = createSignal(false)
-  TuiPluginRuntime.init()
-    .catch((error) => {
-      console.error("Failed to initialize TUI runtime", error)
-    })
-    .finally(() => {
-      setReady(true)
-    })
 
   // Let selection copy/dismiss win ahead of normal bindings when the feature flag is on.
   const offSelectionKeys = keymap.intercept(
@@ -437,9 +414,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       return
     }
 
-    if (route.data.type === "plugin") {
-      renderer.setTerminalTitle(`OC | ${route.data.id}`)
-    }
   })
 
   const args = useArgs()
@@ -736,29 +710,10 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         category: "System",
       },
       {
-        name: "theme.switch",
-        title: "Switch theme",
-        slashName: "themes",
-        run: () => {
-          dialog.replace(() => <DialogThemeList />)
-        },
-        category: "System",
-      },
-      {
         name: "theme.switch_mode",
         title: mode() === "dark" ? "Switch to light mode" : "Switch to dark mode",
         run: () => {
           setMode(mode() === "dark" ? "light" : "dark")
-          dialog.clear()
-        },
-        category: "System",
-      },
-      {
-        name: "theme.mode.lock",
-        title: locked() ? "Unlock theme mode" : "Lock theme mode",
-        run: () => {
-          if (locked()) unlock()
-          else lock()
           dialog.clear()
         },
         category: "System",
@@ -773,53 +728,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         category: "System",
       },
       {
-        name: "docs.open",
-        title: "Open docs",
-        run: () => {
-          open("https://openagent.ai/docs").catch(() => {})
-          dialog.clear()
-        },
-        category: "System",
-      },
-      {
         name: "app.exit",
         title: "Exit the app",
         slashName: "exit",
         slashAliases: ["quit", "q"],
         run: () => exit(),
         category: "System",
-      },
-      {
-        name: "app.debug",
-        title: "Toggle debug panel",
-        category: "System",
-        run: () => {
-          renderer.toggleDebugOverlay()
-          dialog.clear()
-        },
-      },
-      {
-        name: "app.console",
-        title: "Toggle console",
-        category: "System",
-        run: () => {
-          renderer.console.toggle()
-          dialog.clear()
-        },
-      },
-      {
-        name: "app.heap_snapshot",
-        title: "Write heap snapshot",
-        category: "System",
-        run: async () => {
-          const files = await props.onSnapshot?.()
-          toast.show({
-            variant: "info",
-            message: `Heap snapshot written to ${files?.join(", ")}`,
-            duration: 5000,
-          })
-          dialog.clear()
-        },
       },
       {
         name: "terminal.suspend",
@@ -847,15 +761,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
             if (!next) renderer.setTerminalTitle("")
             return next
           })
-          dialog.clear()
-        },
-      },
-      {
-        name: "app.toggle.animations",
-        title: kv.get("animations_enabled", true) ? "Disable animations" : "Enable animations",
-        category: "System",
-        run: () => {
-          kv.set("animations_enabled", !kv.get("animations_enabled", true))
           dialog.clear()
         },
       },
@@ -1044,25 +949,18 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       <Show when={Flag.OPENAGENT_SHOW_TTFD}>
         <TimeToFirstDraw />
       </Show>
-      <Show when={ready()}>
-        <box flexGrow={1} minHeight={0} flexDirection="column">
-          <Switch>
-            <Match when={route.data.type === "home"}>
-              <Home />
-            </Match>
-            <Match when={route.data.type === "session"}>
-              <Show when={route.data.type === "session" ? route.data.sessionID : undefined} keyed>
-                {(_) => <Session />}
-              </Show>
-            </Match>
-          </Switch>
-        </box>
-        <box flexShrink={0}>
-          <TuiPluginRuntime.Slot name="app_bottom" />
-        </box>
-        <TuiPluginRuntime.Slot name="app" />
-      </Show>
-      <StartupLoading ready={ready} />
+      <box flexGrow={1} minHeight={0} flexDirection="column">
+        <Switch>
+          <Match when={route.data.type === "home"}>
+            <Home />
+          </Match>
+          <Match when={route.data.type === "session"}>
+            <Show when={route.data.type === "session" ? route.data.sessionID : undefined} keyed>
+              {(_) => <Session />}
+            </Show>
+          </Match>
+        </Switch>
+      </box>
     </box>
   )
 }

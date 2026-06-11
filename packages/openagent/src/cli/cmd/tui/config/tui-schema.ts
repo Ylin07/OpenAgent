@@ -27,7 +27,6 @@ export const Prompt = Schema.Struct({
 
 export const TuiInfo = Schema.Struct({
   $schema: Schema.optional(Schema.String),
-  theme: Schema.optional(Schema.String),
   keybinds: Schema.optional(TuiKeybind.KeybindOverrides),
   leader_timeout: Schema.optional(KeymapLeaderTimeout),
   prompt: Schema.optional(Prompt),

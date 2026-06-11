@@ -94,7 +94,6 @@ import { useTuiConfig } from "../../context/tui-config"
 import { nextThinkingMode, reasoningSummary, useThinkingMode, type ThinkingMode } from "../../context/thinking"
 import { getScrollAcceleration } from "../../util/scroll"
 import { collapseToolOutput } from "../../util/collapse-tool-output"
-import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime"
 import { DialogRetryAction } from "../../component/dialog-retry-action"
 import { SessionRetry } from "@/session/retry"
 import { getRevertDiffFiles } from "../../util/revert-diff"
@@ -1444,28 +1443,17 @@ export function Session() {
                       <SubagentFooter />
                     </Show>
                     <Show when={promptVisible()}>
-                      <TuiPluginRuntime.Slot
-                        name="session_prompt"
-                        mode="replace"
-                        session_id={route.sessionID}
+                      <Prompt
+                        compact
                         visible={promptVisible()}
-                        disabled={disabled()}
-                        on_submit={toBottom}
                         ref={bind}
-                      >
-                        <Prompt
-                          compact
-                          visible={promptVisible()}
-                          ref={bind}
-                          disabled={disabled()}
-                          onModeChange={setPromptMode}
-                          onSubmit={() => {
-                            toBottom()
-                          }}
-                          sessionID={route.sessionID}
-                          right={<TuiPluginRuntime.Slot name="session_prompt_right" session_id={route.sessionID} />}
-                        />
-                      </TuiPluginRuntime.Slot>
+                        disabled={disabled()}
+                        onModeChange={setPromptMode}
+                        onSubmit={() => {
+                          toBottom()
+                        }}
+                        sessionID={route.sessionID}
+                      />
                     </Show>
                   </box>
                 </box>

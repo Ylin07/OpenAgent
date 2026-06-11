@@ -1,6 +1,7 @@
 export * as Npm from "./npm"
 
 import path from "path"
+import { createRequire } from "module"
 import npa from "npm-package-arg"
 import { Effect, Schema, Context, Layer, Option, FileSystem } from "effect"
 import { NodeFileSystem } from "@effect/platform-node"
@@ -38,6 +39,42 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@openagent/Npm") {}
 
 const illegal = process.platform === "win32" ? new Set(["<", ">", ":", '"', "|", "?", "*"]) : undefined
+const npmAgentProxyPatch = Symbol.for("@openagent-ai/core/npm-agent-proxy-patch")
+
+type NpmAgentModule = {
+  Agent?: { prototype: object }
+  default?: { Agent?: { prototype: object } }
+}
+
+async function patchNpmAgentProxyForBun() {
+  if (typeof Bun === "undefined") return
+
+  const requireFromArborist = createRequire(new URL(import.meta.resolve("@npmcli/arborist")))
+  const registryFetch = requireFromArborist.resolve("npm-registry-fetch")
+  const requireFromRegistryFetch = createRequire(registryFetch)
+  const makeFetch = requireFromRegistryFetch.resolve("make-fetch-happen")
+  const requireFromMakeFetch = createRequire(makeFetch)
+  const agentModule = requireFromMakeFetch("@npmcli/agent") as NpmAgentModule
+  const Agent = agentModule.Agent ?? agentModule.default?.Agent
+  if (!Agent?.prototype) return
+
+  const proto = Agent.prototype as Record<PropertyKey, unknown>
+  if (proto[npmAgentProxyPatch]) return
+
+  const descriptor = Object.getOwnPropertyDescriptor(proto, "proxy")
+  if (!descriptor?.get) return
+
+  Object.defineProperty(proto, "proxy", {
+    ...descriptor,
+    get() {
+      const value = descriptor.get!.call(this)
+      if (!value || typeof value !== "object") return value
+      const record = value as Record<string, unknown>
+      return record.url instanceof URL ? { ...record, url: record.url.toString() } : value
+    },
+  })
+  Object.defineProperty(proto, npmAgentProxyPatch, { value: true })
+}
 
 export function sanitize(pkg: string) {
   if (!illegal) return pkg
@@ -55,6 +92,16 @@ const resolveEntryPoint = (name: string, dir: string): EntryPoint => {
   return {
     directory: dir,
     entrypoint,
+  }
+}
+
+const canResolveFrom = (name: string, dir: string) => {
+  try {
+    if (typeof Bun !== "undefined") import.meta.resolve(name, path.join(dir, "package.json"))
+    else createRequire(path.join(dir, "package.json")).resolve(name)
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -79,6 +126,7 @@ export const layer = Layer.effect(
       Effect.gen(function* () {
         yield* flock.acquire(`npm-install:${input.dir}`)
         const { Arborist } = yield* Effect.promise(() => import("@npmcli/arborist"))
+        yield* Effect.promise(() => patchNpmAgentProxyForBun()).pipe(Effect.ignore)
         const add = input.add ?? []
         const npmOptions = yield* NpmConfig.load(input.dir)
         const arborist = new Arborist({
@@ -142,14 +190,14 @@ export const layer = Layer.effect(
       if (!canWrite) return
 
       const add = input?.add.map((pkg) => [pkg.name, pkg.version].filter(Boolean).join("@")) ?? []
+      const injected = new Set(input?.add.map((pkg) => pkg.name) ?? [])
       if (
         yield* Effect.gen(function* () {
           const nodeModulesExists = yield* afs.existsSafe(path.join(dir, "node_modules"))
-          if (!nodeModulesExists) {
-            yield* reify({ add, dir })
-            return true
-          }
-          return false
+          if (nodeModulesExists) return false
+          if (input?.add.length && input.add.every((pkg) => canResolveFrom(pkg.name, dir))) return true
+          yield* reify({ add, dir })
+          return true
         }).pipe(Effect.withSpan("Npm.checkNodeModules"))
       )
         return
@@ -178,6 +226,10 @@ export const layer = Layer.effect(
 
         for (const name of declared) {
           if (!locked.has(name)) {
+            const available =
+              injected.has(name) &&
+              ((yield* afs.existsSafe(path.join(dir, "node_modules", name))) || canResolveFrom(name, dir))
+            if (available) continue
             yield* reify({ dir, add })
             return
           }

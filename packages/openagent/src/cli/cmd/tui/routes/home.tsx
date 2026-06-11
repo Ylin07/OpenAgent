@@ -6,7 +6,6 @@ import { useArgs } from "../context/args"
 import { useRoute, useRouteData } from "@tui/context/route"
 import { usePromptRef } from "../context/prompt"
 import { useLocal } from "../context/local"
-import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime"
 import { useEditorContext } from "@tui/context/editor"
 import { useTerminalDimensions } from "@opentui/solid"
 import { useTuiConfig } from "../context/tui-config"
@@ -266,27 +265,20 @@ export function Home() {
             {sessionMode()}
           </text>
           <box flexGrow={1} minWidth={0}>
-            <TuiPluginRuntime.Slot name="home_prompt" mode="replace" ref={bind}>
-              <Prompt
-                compact
-                autoFocus={homeMode() === "INSERT"}
-                ref={bind}
-                right={<TuiPluginRuntime.Slot name="home_prompt_right" />}
-                onFocusChange={(focused) => setHomeMode(focused ? "INSERT" : "NORMAL")}
-                onModeChange={setPromptMode}
-                placeholders={placeholder}
-              />
-            </TuiPluginRuntime.Slot>
+            <Prompt
+              compact
+              autoFocus={homeMode() === "INSERT"}
+              ref={bind}
+              onFocusChange={(focused) => setHomeMode(focused ? "INSERT" : "NORMAL")}
+              onModeChange={setPromptMode}
+              placeholders={placeholder}
+            />
           </box>
         </box>
 
         <HomeShortcutHints mode={homeMode()} compact={compact()} paletteShortcut={paletteShortcut()} />
 
-        <TuiPluginRuntime.Slot name="home_bottom" />
         <Toast />
-      </box>
-      <box width="100%" flexShrink={0}>
-        <TuiPluginRuntime.Slot name="home_footer" mode="single_winner" />
       </box>
     </HomeSessionDestinationProvider>
   )
