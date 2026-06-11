@@ -4,7 +4,7 @@ GLOBAL_CONFIG_DIR ?= $(XDG_CONFIG_HOME)/$(APP)
 LOCAL_OPENAGENT_DIR := .openagent
 DEPLOY_DIRS := agent skills tool ctf docs
 
-.PHONY: deploy help build run dev clean clean-build typecheck
+.PHONY: deploy help install-tools build run dev clean clean-build typecheck
 
 deploy:
 	@test -d "$(LOCAL_OPENAGENT_DIR)" || { echo "missing $(LOCAL_OPENAGENT_DIR)"; exit 1; }
@@ -24,6 +24,7 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "  deploy     Deploy local .openagent CTF files and docs to global config (default)"
+	@echo "  install-tools Install local development and CTF environment tools"
 	@echo "  build      Build the openagent binary (linux-x64)"
 	@echo "  run        Run the built binary"
 	@echo "  dev        Run in dev mode (bun src/index.ts)"
@@ -34,6 +35,9 @@ help:
 	@echo "Variables:"
 	@echo "  APP=$(APP)"
 	@echo "  GLOBAL_CONFIG_DIR=$(GLOBAL_CONFIG_DIR)"
+
+install-tools:
+	bash scripts/install-env.sh
 
 build:
 	bun run --cwd packages/openagent script/build.ts --single --skip-install
