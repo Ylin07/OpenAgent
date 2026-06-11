@@ -1,6 +1,15 @@
 # OpenAgent
 
-OpenAgent 是一个基于 Bun/TypeScript 的终端 AI 开发工具。项目提供可交互的 TUI、会话管理、模型/Provider 接入、插件与 SDK 能力，并在本仓库中内置了一套面向授权 CTF 场景的 agent、skills、tools 和知识库。
+![version](https://img.shields.io/badge/version-v1.16.2-0ea5e9?style=for-the-badge&labelColor=3f3f46)
+![bun](https://img.shields.io/badge/bun-1.3.14-f97316?style=for-the-badge&labelColor=3f3f46)
+![typescript](https://img.shields.io/badge/TypeScript-5.8.2-3178c6?style=for-the-badge&labelColor=3f3f46)
+![python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=for-the-badge&labelColor=3f3f46)
+![ctf](https://img.shields.io/badge/CTF-pwn%20%7C%20reverse%20%7C%20web-7c3aed?style=for-the-badge&labelColor=3f3f46)
+[![docs](https://img.shields.io/badge/docs-README-0f8ecf?style=for-the-badge&labelColor=3f3f46)](#openagent)
+![language](https://img.shields.io/badge/language-%E4%B8%AD%E6%96%87%20%7C%20English-0891b2?style=for-the-badge&labelColor=3f3f46)
+![license](https://img.shields.io/badge/license-MIT-111827?style=for-the-badge&labelColor=3f3f46)
+
+OpenAgent 是一个基于 OpenCode 二次开发的终端 AI 开发工具。项目提供可交互的 TUI、会话管理、模型/Provider 接入、插件与 SDK 能力，并在本仓库中内置了一套面向授权 CTF 场景的 agent、skills、tools 和知识库。
 
 本项目适合两类使用方式：
 
