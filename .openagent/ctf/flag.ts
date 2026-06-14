@@ -1,6 +1,6 @@
 import { tool } from "@openagent-ai/plugin"
 import { code, requestPermission, section } from "./core.ts"
-import { appendRun, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -49,6 +49,7 @@ export const flag = tool({
     text: z.string().optional().describe("包含候选 flag 的输出、文件片段或响应文本"),
     candidate: z.string().optional().describe("已知候选 flag"),
     source: z.string().optional().describe("候选来源，例如命令、文件、URL、子 agent 输出"),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const haystack = [args.candidate, args.text].filter(Boolean).join("\n")
@@ -62,17 +63,22 @@ export const flag = tool({
       ...extractCandidates(haystack),
     ])
     const best = candidates.find((item) => item.confidence === "high") ?? candidates[0]
-    await appendRun(ctx, {
-      type: "flag",
-      source: args.source,
-      candidates: candidates.map((item) => ({ value: item.value, confidence: item.confidence, reason: item.reason })),
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "flag",
+        source: args.source,
+        candidates: candidates.map((item) => ({ value: item.value, confidence: item.confidence, reason: item.reason })),
+      },
+      args.challenge,
+    )
     if (best) {
       await writeNote(ctx, {
         category: "flag",
         title: `候选 flag: ${best.value}`,
         content: `置信度: ${best.confidence}\n原因: ${best.reason}\n来源: ${args.source ?? "unknown"}`,
         tags: ["flag", best.confidence],
+        challenge: args.challenge,
       })
     }
     return {

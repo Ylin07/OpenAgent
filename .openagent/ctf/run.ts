@@ -11,7 +11,7 @@ import {
   runCommand,
   section,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -26,6 +26,7 @@ export const run = tool({
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
     purpose: z.string().describe("为什么要执行这个命令"),
     saveOutput: z.boolean().optional().describe("是否把完整输出保存到 .ctf/artifacts"),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     if (!args.argv?.length && !args.command?.trim()) throw new Error("必须提供 argv 或 command")
@@ -44,7 +45,7 @@ export const run = tool({
       timeoutMs: clampTimeout(args.timeoutMs),
       label: args.purpose,
     })
-    const ws = await ensureCtfWorkspace(ctx)
+    const ws = await ensureCtfWorkspace(ctx, args.challenge)
     let outputPath: string | undefined
     if (args.saveOutput) {
       outputPath = join(ws.artifacts, `run-${Date.now()}.txt`)
@@ -55,15 +56,19 @@ export const run = tool({
         ),
       )
     }
-    await appendRun(ctx, {
-      type: "run",
-      purpose: args.purpose,
-      cwd,
-      command: result.command,
-      exitCode: result.exitCode,
-      timedOut: result.timedOut,
-      outputPath,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "run",
+        purpose: args.purpose,
+        cwd,
+        command: result.command,
+        exitCode: result.exitCode,
+        timedOut: result.timedOut,
+        outputPath,
+      },
+      args.challenge,
+    )
     return {
       title: `CTF run: ${command[0]}`,
       output: [section("目的", args.purpose), section("结果", formatCommands([result])), outputPath ? `完整输出: ${outputPath}` : ""].join(

@@ -14,7 +14,7 @@ import {
   section,
   shellQuote,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -176,12 +176,13 @@ export const unpack = tool({
     dumpStart: z.string().optional().describe("action=dump 可选内存 dump 起始地址，必须是 0x..."),
     dumpEnd: z.string().optional().describe("action=dump 可选内存 dump 结束地址，必须是 0x..."),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const target = normalizePath(args.target, ctx)
     const timeoutMs = clampTimeout(args.timeoutMs)
     const cwd = dirname(target)
-    const ws = await ensureCtfWorkspace(ctx)
+    const ws = await ensureCtfWorkspace(ctx, args.challenge)
 
     await requestPermission(ctx, "ctf_unpack", target, { action: args.action, target })
     ctx.metadata({ title: `CTF unpack: ${basename(target)}`, metadata: { action: args.action, target } })
@@ -216,7 +217,7 @@ export const unpack = tool({
         sections,
       })
 
-      await appendRun(ctx, { type: "unpack", action: "identify", target, fileEntropy, hints })
+      await appendRun(ctx, { type: "unpack", action: "identify", target, fileEntropy, hints }, args.challenge)
       const likelyUpx = /UPX signature|string 或 upx -t packed|UPX-like/i.test(hints)
       await writeNote(ctx, {
         category: "reverse",
@@ -229,6 +230,7 @@ export const unpack = tool({
           ? "如确认是 UPX，使用 ctf_unpack action=upx 生成解包副本。"
           : "若静态入口/import 异常，使用 ctf_unpack action=dump 在 starti/OEP 附近记录 mappings/registers，必要时指定 dumpStart/dumpEnd。",
         tags: ["reverse", "unpack", basename(target)],
+        challenge: args.challenge,
       })
 
       return {
@@ -255,13 +257,17 @@ export const unpack = tool({
         { label: "file unpacked", command: ["file", "-b", output], timeoutMs, maxOutput: 4_000 },
         { label: "readelf unpacked header", command: ["readelf", "-h", output], timeoutMs, maxOutput: 12_000 },
       ])
-      await appendRun(ctx, {
-        type: "unpack",
-        action: "upx",
-        target,
-        output,
-        exitCode: results.find((item) => item.label === "upx decompress")?.exitCode,
-      })
+      await appendRun(
+        ctx,
+        {
+          type: "unpack",
+          action: "upx",
+          target,
+          output,
+          exitCode: results.find((item) => item.label === "upx decompress")?.exitCode,
+        },
+        args.challenge,
+      )
       await writeNote(ctx, {
         category: "reverse",
         title: `UPX unpack ${basename(target)}`,
@@ -269,6 +275,7 @@ export const unpack = tool({
         evidence: formatCommands(results),
         next: "对解包副本重新跑 ctf_reverse/ctf_pwn，确认入口点、imports 和字符串是否恢复。",
         tags: ["reverse", "unpack", "upx", basename(target)],
+        challenge: args.challenge,
       })
 
       return {
@@ -318,19 +325,23 @@ export const unpack = tool({
       ].join("\n"),
     )
 
-    await appendRun(ctx, {
-      type: "unpack",
-      action: "dump",
-      target,
-      mode,
-      scriptPath,
-      outputPath,
-      dumpPath,
-      dumpStart,
-      dumpEnd,
-      exitCode: gdbResult.exitCode,
-      timedOut: gdbResult.timedOut,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "unpack",
+        action: "dump",
+        target,
+        mode,
+        scriptPath,
+        outputPath,
+        dumpPath,
+        dumpStart,
+        dumpEnd,
+        exitCode: gdbResult.exitCode,
+        timedOut: gdbResult.timedOut,
+      },
+      args.challenge,
+    )
     await writeNote(ctx, {
       category: "reverse",
       title: `Unpack dump ${basename(target)}`,
@@ -347,6 +358,7 @@ export const unpack = tool({
       ].join("\n"),
       next: "根据 mappings 和 $pc 判断 OEP；如果已到解包后代码区，指定可执行映射范围重跑 dump 并导入 IDA/Ghidra/r2。",
       tags: ["reverse", "unpack", "dump", basename(target)],
+      challenge: args.challenge,
     })
 
     return {

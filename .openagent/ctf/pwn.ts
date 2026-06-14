@@ -11,8 +11,9 @@ import {
   runBatch,
   section,
   selectPwnBinary,
+  type CommandSpec,
 } from "./core.ts"
-import { appendRun, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -26,6 +27,7 @@ export const pwn = tool({
     remoteHost: z.string().optional().describe("授权 CTF 远程 host，仅做 banner check"),
     remotePort: z.number().int().positive().max(65535).optional(),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const binary = await selectPwnBinary(args.binary, ctx)
@@ -48,7 +50,7 @@ export const pwn = tool({
     if (!existsSync(binary)) throw new Error(`Binary not found: ${binary}`)
     const cwd = dirname(binary)
     const timeoutMs = clampTimeout(args.timeoutMs)
-    const commands = [
+    const commands: CommandSpec[] = [
       { label: "file", command: ["file", "-b", binary], timeoutMs },
       { label: "checksec", command: ["checksec", "--file", binary], timeoutMs },
       { label: "readelf header", command: ["readelf", "-h", binary], timeoutMs },
@@ -90,11 +92,15 @@ export const pwn = tool({
       : ""
     const commandText = formatCommands(results.filter((item) => item.label !== "deep objdump disassembly"))
 
-    await appendRun(ctx, {
-      type: "pwn",
-      binary,
-      remote: args.remoteHost && args.remotePort ? `${args.remoteHost}:${args.remotePort}` : undefined,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "pwn",
+        binary,
+        remote: args.remoteHost && args.remotePort ? `${args.remoteHost}:${args.remotePort}` : undefined,
+      },
+      args.challenge,
+    )
     await writeNote(ctx, {
       category: "pwn",
       title: `Pwn triage ${basename(binary)}`,
@@ -106,6 +112,7 @@ export const pwn = tool({
         ? "优先验证 deep 摘要里的危险调用点；如可控崩溃，生成 cyclic 并定位 offset。"
         : "确认输入面和 crash primitive；如可控崩溃，生成 cyclic 并定位 offset。可用 deep=true 直接摘要可疑函数。",
       tags: ["pwn", basename(binary)],
+      challenge: args.challenge,
     })
 
     return {

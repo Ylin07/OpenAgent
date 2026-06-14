@@ -2,7 +2,7 @@ import { Socket } from "node:net"
 import tls from "node:tls"
 import { tool } from "@openagent-ai/plugin"
 import { MAX_TIMEOUT_MS, clampTimeout, clip, code, requestPermission, section } from "./core.ts"
-import { appendRun, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 const MAX_WEB_BODY = 1024 * 1024
@@ -189,6 +189,7 @@ export const web = tool({
     paths: z.array(z.string()).max(30).optional().describe("额外同源路径，保持短小"),
     includeCommon: z.boolean().optional().describe("是否包含内置小型 common path，默认 true"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const base = safeUrl(args.url)
@@ -219,7 +220,7 @@ export const web = tool({
       .map((item) => ("body" in item ? summarizeResponse(item) : `error ${item.url}\n${item.error}`))
       .join("\n\n---\n\n")
 
-    await appendRun(ctx, { type: "web", target: base.toString(), checked: paths.length })
+    await appendRun(ctx, { type: "web", target: base.toString(), checked: paths.length }, args.challenge)
     await writeNote(ctx, {
       category: "web",
       title: `Web triage ${base.origin}`,
@@ -227,6 +228,7 @@ export const web = tool({
       evidence: clip(checks, 4_000),
       next: "根据表单、脚本、隐藏路径和响应差异选择一个参数或入口做最小 payload 验证。",
       tags: ["web", base.origin],
+      challenge: args.challenge,
     })
 
     return {

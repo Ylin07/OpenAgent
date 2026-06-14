@@ -13,7 +13,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -130,6 +130,7 @@ export const rop = tool({
     depth: z.number().int().positive().max(30).optional().describe("ROPgadget depth，默认 10"),
     maxCandidates: z.number().int().positive().max(200).optional().describe("每类候选最多输出数量，默认 80"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const binary = await selectPwnBinary(args.binary, ctx)
@@ -186,7 +187,7 @@ export const rop = tool({
     const useful = usefulGadgets(gadgetText, maxCandidates)
     const csu = ret2csuCandidates(gadgetText, maxCandidates)
 
-    const ws = await ensureCtfWorkspace(ctx)
+    const ws = await ensureCtfWorkspace(ctx, args.challenge)
     const artifact = join(ws.artifacts, `rop-${basename(binary)}-${Date.now()}.txt`)
     await writeFile(
       artifact,
@@ -203,14 +204,18 @@ export const rop = tool({
         .join("\n\n"),
     )
 
-    await appendRun(ctx, {
-      type: "rop",
-      binary,
-      libc,
-      artifact,
-      usefulCount: useful ? useful.split("\n").length : 0,
-      ret2csuCount: csu ? csu.split("\n").length : 0,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "rop",
+        binary,
+        libc,
+        artifact,
+        usefulCount: useful ? useful.split("\n").length : 0,
+        ret2csuCount: csu ? csu.split("\n").length : 0,
+      },
+      args.challenge,
+    )
     await writeNote(ctx, {
       category: "pwn",
       title: `ROP candidates ${basename(binary)}`,
@@ -222,6 +227,7 @@ export const rop = tool({
       ].filter(Boolean).join("\n\n"),
       next: "结合 offset、保护和 leak 选择 ret2text/ret2libc/ret2syscall/ret2csu 链，并用 pwntools 分阶段验证。",
       tags: ["pwn", "rop", basename(binary)],
+      challenge: args.challenge,
     })
 
     return {

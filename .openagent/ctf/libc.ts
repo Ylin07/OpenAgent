@@ -12,7 +12,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -194,7 +194,7 @@ function buildLibcRipQueries(leaks: LeakInput[]) {
 
   const queries: Array<Record<string, string>> = []
   if (libcStartMainRet) {
-    const retAdjusted = { ...normal, __libc_start_main_ret: libcStartMainRet }
+    const retAdjusted: Record<string, string> = { ...normal, __libc_start_main_ret: libcStartMainRet }
     delete retAdjusted.__libc_start_main
     queries.push(retAdjusted)
   }
@@ -302,6 +302,7 @@ export const libc = tool({
     onlineLookup: z.boolean().optional().describe("本地/provided libc 不匹配或 remote 未知时是否自动查询 libc.rip，默认 true"),
     python: z.string().optional().describe("Python 解释器，默认 python3"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const timeoutMs = clampTimeout(args.timeoutMs)
@@ -386,7 +387,7 @@ export const libc = tool({
       if (oneGadgetResult.exitCode === 0) oneGadgets = parseOneGadgetOffsets(oneGadgetResult.stdout)
     }
 
-    const ws = await ensureCtfWorkspace(ctx)
+    const ws = await ensureCtfWorkspace(ctx, args.challenge)
     const stateRaw = await readFile(ws.state, "utf8").catch(() => "{}")
     const state = parseState(stateRaw)
     const resolved = {
@@ -416,15 +417,19 @@ export const libc = tool({
     }
     await writeFile(ws.state, JSON.stringify(state, null, 2) + "\n")
 
-    await appendRun(ctx, {
-      type: "libc",
-      assumption,
-      binary,
-      libc: libcPath,
-      base: hex(selectedBase),
-      leakCount: leaks.length,
-      oneGadgetCount: oneGadgets.length,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "libc",
+        assumption,
+        binary,
+        libc: libcPath,
+        base: hex(selectedBase),
+        leakCount: leaks.length,
+        oneGadgetCount: oneGadgets.length,
+      },
+      args.challenge,
+    )
     await writeNote(ctx, {
       category: "pwn",
       title: `libc ${hex(selectedBase) ?? assumption}`,
@@ -446,6 +451,7 @@ export const libc = tool({
           ? "从 Remote libc 候选中选择匹配项，下载/提供 libc.so 后重跑；或直接使用候选里计算出的 system/bin_sh 做远程验证。"
           : "提供 libc 路径或更多 leak 后重跑 ctf_libc；remote 场景可先确认 BuildID/libc 版本。",
       tags: ["pwn", "libc"],
+      challenge: args.challenge,
     })
 
     return {

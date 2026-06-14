@@ -51,6 +51,7 @@ permission:
 - 使用当前 session 中的工具和技能。
 - 禁止调用 `task` 或创建子 agent。
 - 首先调用 `ctf_status` 加载已有的 `.ctf` 笔记和产物。
+- 同一工作区处理多道题时，开始新题必须在 `ctf_status` 或任意 `ctf_*` 工具中传 `challenge` 题目名；工具会把它记录为 `.ctf/current-challenge`，后续省略 `challenge` 时默认继续使用当前题。切换题目时必须显式传新的 `challenge`。
 - 题型不明确时加载 `ctf-triage`；确定领域后，在深入分析前用 `skill` 工具加载对应技能：`ctf-reverse`、`ctf-pwn` 或 `ctf-web`。
 - 技能是工作流层，`.openagent/docs` 是按需参考的知识库。只阅读与观察到的证据匹配的专题文档。
 - 重要事实、已验证假设、有用命令和下一步计划用 `ctf_note` 记录。

@@ -13,7 +13,7 @@ import {
   runBatch,
   section,
 } from "./core.ts"
-import { appendRun, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -24,6 +24,7 @@ export const reverse = tool({
     path: z.string().optional().describe("题目文件或目录，相对 session directory"),
     deep: z.boolean().optional().describe("是否运行额外静态命令，默认 false"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const target = normalizePath(args.path, ctx)
@@ -58,7 +59,7 @@ export const reverse = tool({
       .join("\n")
     const commandText = formatCommands(results)
 
-    await appendRun(ctx, { type: "reverse", target: primary, files: files.length })
+    await appendRun(ctx, { type: "reverse", target: primary, files: files.length }, args.challenge)
     await writeNote(ctx, {
       category: "reverse",
       title: `Reverse triage ${basename(primary)}`,
@@ -66,6 +67,7 @@ export const reverse = tool({
       evidence: stringHints || commandText.slice(0, 4_000),
       next: "定位输入校验路径、关键字符串引用、编码/混淆循环或解包入口。",
       tags: ["reverse", basename(primary)],
+      challenge: args.challenge,
     })
 
     return {

@@ -13,7 +13,7 @@ import {
   selectPwnBinary,
   shellQuote,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -221,6 +221,7 @@ export const crash = tool({
     wordSize: z.number().int().min(1).max(16).optional().describe("pwntools cyclic n；默认按 ELF 32/64-bit 推断为 4/8"),
     stackWords: z.number().int().positive().max(256).optional().describe("gdb 栈快照 word 数，默认 64"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const binary = await selectPwnBinary(args.binary, ctx)
@@ -259,7 +260,7 @@ export const crash = tool({
       }
     }
 
-    const ws = await ensureCtfWorkspace(ctx)
+    const ws = await ensureCtfWorkspace(ctx, args.challenge)
     const stamp = Date.now()
     const pattern = patternResult.stdout
     const payloadCore = `${prefix}${pattern}${suffix}`
@@ -304,18 +305,22 @@ export const crash = tool({
     const hits = findOffsets(pattern, collectCandidates(gdbText), wordSize, prefixLength)
     const best = ripHijackHit(hits)
 
-    await appendRun(ctx, {
-      type: "crash",
-      binary,
-      delivery,
-      patternLength,
-      wordSize,
-      offset: best?.payloadOffset,
-      patternOffset: best?.patternOffset,
-      artifacts: { inputPath: delivery === "stdin" ? inputPath : undefined, scriptPath, outputPath },
-      exitCode: gdbResult.exitCode,
-      timedOut: gdbResult.timedOut,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "crash",
+        binary,
+        delivery,
+        patternLength,
+        wordSize,
+        offset: best?.payloadOffset,
+        patternOffset: best?.patternOffset,
+        artifacts: { inputPath: delivery === "stdin" ? inputPath : undefined, scriptPath, outputPath },
+        exitCode: gdbResult.exitCode,
+        timedOut: gdbResult.timedOut,
+      },
+      args.challenge,
+    )
     await writeNote(ctx, {
       category: "pwn",
       title: `Crash offset ${basename(binary)}`,
@@ -325,6 +330,7 @@ export const crash = tool({
         ? `用 payload_offset=${best.payloadOffset} 构造下一阶段 payload，并用 gdb/pwntools 复测控制流。`
         : "调整输入投递方式或 pattern 参数后重跑 ctf_crash。",
       tags: ["pwn", "crash", basename(binary)],
+      challenge: args.challenge,
     })
 
     return {

@@ -1,6 +1,6 @@
 import { basename, dirname, join, relative } from "node:path"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
-import { tool } from "@openagent-ai/plugin"
+import { tool, type ToolContext } from "@openagent-ai/plugin"
 import {
   MAX_TIMEOUT_MS,
   clampTimeout,
@@ -11,7 +11,7 @@ import {
   runCommand,
   section,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -85,6 +85,7 @@ export const heap = tool({
     dataBytes: z.number().int().min(0).max(256).optional().describe("每个 chunk 记录的 user data 字节数，默认 32"),
     includeAnonymous: z.boolean().optional().describe("除 [heap] 外也扫描 rw anonymous mapping，默认 false"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const timeoutMs = clampTimeout(args.timeoutMs)
@@ -106,6 +107,7 @@ export const heap = tool({
           dataBytes: args.dataBytes ?? 32,
           includeAnonymous: args.includeAnonymous ?? false,
           timeoutMs,
+          challenge: args.challenge,
         },
         ctx,
       )
@@ -118,14 +120,14 @@ export const heap = tool({
       await requestPermission(ctx, "ctf_heap", snap1, { action: args.action, snap1, snap2 })
       await requestPermission(ctx, "ctf_heap", snap2, { action: args.action, snap1, snap2 })
       ctx.metadata({ title: "CTF heap diff", metadata: { action: args.action, snap1, snap2 } })
-      return await executeDiff(snap1, snap2, ctx)
+      return await executeDiff(snap1, snap2, ctx, args.challenge)
     }
 
     const snap = args.snap ?? args.snap1 ?? args.snapshots?.[0]
     if (!snap) throw new Error("action=check 需要 snap")
     await requestPermission(ctx, "ctf_heap", snap, { action: args.action, snap })
     ctx.metadata({ title: "CTF heap check", metadata: { action: args.action, snap } })
-    return await executeCheck(snap, ctx)
+    return await executeCheck(snap, ctx, args.challenge)
   },
 })
 
@@ -138,10 +140,11 @@ async function executeSnapshot(
     dataBytes: number
     includeAnonymous: boolean
     timeoutMs: number
+    challenge?: string
   },
-  ctx: Parameters<typeof heap.execute>[1],
+  ctx: ToolContext,
 ) {
-  const ws = await ensureCtfWorkspace(ctx)
+  const ws = await ensureCtfWorkspace(ctx, input.challenge)
   const timestamp = safeTimestamp()
   const scriptPath = join(ws.artifacts, `heap-snapshot-${input.pid}-${timestamp}.gdb.py`)
   const outputPath = input.output
@@ -166,13 +169,17 @@ async function executeSnapshot(
   })
   const parsed = parseMarkedJson(result.stdout)
   if (!parsed) {
-    await appendRun(ctx, {
-      type: "heap-snapshot",
-      pid: input.pid,
-      ok: false,
-      exitCode: result.exitCode,
-      timedOut: result.timedOut,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "heap-snapshot",
+        pid: input.pid,
+        ok: false,
+        exitCode: result.exitCode,
+        timedOut: result.timedOut,
+      },
+      input.challenge,
+    )
     return {
       title: `CTF heap snapshot failed: ${input.pid}`,
       output: [
@@ -188,13 +195,17 @@ async function executeSnapshot(
   const pretty = JSON.stringify(snapshot, null, 2)
   await writeFile(outputPath, pretty + "\n")
   const diagnostics = diagnoseSnapshot(snapshot)
-  await appendRun(ctx, {
-    type: "heap-snapshot",
-    pid: input.pid,
-    artifact: outputPath,
-    chunks: snapshot.chunks.length,
-    warnings: diagnostics.filter((item) => item.severity === "warning").length + (snapshot.warnings?.length ?? 0),
-  })
+  await appendRun(
+    ctx,
+    {
+      type: "heap-snapshot",
+      pid: input.pid,
+      artifact: outputPath,
+      chunks: snapshot.chunks.length,
+      warnings: diagnostics.filter((item) => item.severity === "warning").length + (snapshot.warnings?.length ?? 0),
+    },
+    input.challenge,
+  )
   await writeNote(ctx, {
     category: "pwn",
     title: `Heap snapshot pid ${input.pid}`,
@@ -202,6 +213,7 @@ async function executeSnapshot(
     evidence: snapshot.warnings?.length ? snapshot.warnings.map((item) => `- ${item}`).join("\n") : "",
     next: "在关键 malloc/free 前后分别跑 ctf_heap action=snapshot，再用 action=diff/action=check 定位 heap 元数据变化。",
     tags: ["pwn", "heap", `pid:${input.pid}`],
+    challenge: input.challenge,
   })
 
   return {
@@ -229,20 +241,24 @@ async function executeSnapshot(
   }
 }
 
-async function executeDiff(snap1: string, snap2: string, ctx: Parameters<typeof heap.execute>[1]) {
+async function executeDiff(snap1: string, snap2: string, ctx: ToolContext, challenge?: string) {
   const path1 = normalizePath(snap1, ctx)
   const path2 = normalizePath(snap2, ctx)
   const oldSnap = await readSnapshot(path1)
   const newSnap = await readSnapshot(path2)
   const changes = diffSnapshots(oldSnap, newSnap)
   const warnings = changes.filter((item) => item.warning)
-  await appendRun(ctx, {
-    type: "heap-diff",
-    snap1: path1,
-    snap2: path2,
-    changes: changes.length,
-    warnings: warnings.length,
-  })
+  await appendRun(
+    ctx,
+    {
+      type: "heap-diff",
+      snap1: path1,
+      snap2: path2,
+      changes: changes.length,
+      warnings: warnings.length,
+    },
+    challenge,
+  )
   await writeNote(ctx, {
     category: "pwn",
     title: `Heap diff ${basename(path1)} -> ${basename(path2)}`,
@@ -252,6 +268,7 @@ async function executeDiff(snap1: string, snap2: string, ctx: Parameters<typeof 
       ? "优先复核带 warning 的 size/bin/fd 变化；必要时回到触发点前后缩小 snapshot 间隔。"
       : "结合 malloc/free 调用点确认这些 chunk 状态变化是否符合预期。",
     tags: ["pwn", "heap", "diff"],
+    challenge,
   })
   return {
     title: "CTF heap diff",
@@ -264,16 +281,20 @@ async function executeDiff(snap1: string, snap2: string, ctx: Parameters<typeof 
   }
 }
 
-async function executeCheck(snap: string, ctx: Parameters<typeof heap.execute>[1]) {
+async function executeCheck(snap: string, ctx: ToolContext, challenge?: string) {
   const path = normalizePath(snap, ctx)
   const snapshot = await readSnapshot(path)
   const diagnostics = diagnoseSnapshot(snapshot)
-  await appendRun(ctx, {
-    type: "heap-check",
-    snap: path,
-    diagnostics: diagnostics.length,
-    warnings: diagnostics.filter((item) => item.severity === "warning").length,
-  })
+  await appendRun(
+    ctx,
+    {
+      type: "heap-check",
+      snap: path,
+      diagnostics: diagnostics.length,
+      warnings: diagnostics.filter((item) => item.severity === "warning").length,
+    },
+    challenge,
+  )
   await writeNote(ctx, {
     category: "pwn",
     title: `Heap check ${basename(path)}`,
@@ -283,6 +304,7 @@ async function executeCheck(snap: string, ctx: Parameters<typeof heap.execute>[1
       ? "先验证 warning 指向的 chunk/bin 是否来自预期漏洞 primitive，再决定 tcache poisoning、fastbin dup、unlink 或 leak 路线。"
       : "继续在关键操作前后采集快照，或扩大 maxChunks/includeAnonymous 后重跑 snapshot。",
     tags: ["pwn", "heap", "check"],
+    challenge,
   })
   return {
     title: "CTF heap check",

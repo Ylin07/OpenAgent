@@ -12,7 +12,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -120,6 +120,7 @@ export const pwntools = tool({
     wordSize: z.number().int().min(1).max(16).optional().describe("action=cyclic 时 cyclic n/word size，默认 4"),
     crashValue: z.string().optional().describe("action=cyclic 时可选崩溃寄存器值，例如 0x6161616b"),
     timeoutMs: z.number().int().positive().max(MAX_TIMEOUT_MS).optional(),
+    ...challengeArgs(),
   },
   async execute(args, ctx) {
     const python = args.python?.trim() || "python3"
@@ -141,7 +142,7 @@ export const pwntools = tool({
         ],
         timeoutMs,
       })
-      await appendRun(ctx, { type: "pwntools", action: "check", python, exitCode: result.exitCode })
+      await appendRun(ctx, { type: "pwntools", action: "check", python, exitCode: result.exitCode }, args.challenge)
       return {
         title: "CTF pwntools: check",
         output: section("环境检查", formatCommands([result])),
@@ -154,7 +155,7 @@ export const pwntools = tool({
         throw new Error("remoteHost 和 remotePort 必须同时提供")
       }
       const binary = args.binary ? await selectPwnBinary(args.binary, ctx) : undefined
-      const ws = await ensureCtfWorkspace(ctx)
+      const ws = await ensureCtfWorkspace(ctx, args.challenge)
       const filename = `exploit-${binary ? basename(binary).replace(/[^A-Za-z0-9_.-]/g, "_") : Date.now()}.py`
       const path = join(ws.artifacts, filename)
       await requestPermission(ctx, "ctf_pwntools", path, { action: args.action, binary, path })
@@ -165,13 +166,14 @@ export const pwntools = tool({
       })
       await writeFile(path, scriptText)
       await chmod(path, 0o755).catch(() => undefined)
-      await appendRun(ctx, { type: "pwntools", action: "template", binary, path })
+      await appendRun(ctx, { type: "pwntools", action: "template", binary, path }, args.challenge)
       await writeNote(ctx, {
         category: "pwn",
         title: `pwntools 模板 ${filename}`,
         content: `已生成 pwntools exploit 模板: ${path}`,
         next: "填入已验证的 offset、leak、ROP/libc 或交互流程后，用 ctf_pwntools action=run 运行。",
         tags: ["pwn", "pwntools"],
+        challenge: args.challenge,
       })
       return {
         title: "CTF pwntools: template",
@@ -198,14 +200,18 @@ export const pwntools = tool({
         input: args.input,
         timeoutMs,
       })
-      await appendRun(ctx, {
-        type: "pwntools",
-        action: "run",
-        script,
-        cwd,
-        exitCode: result.exitCode,
-        timedOut: result.timedOut,
-      })
+      await appendRun(
+        ctx,
+        {
+          type: "pwntools",
+          action: "run",
+          script,
+          cwd,
+          exitCode: result.exitCode,
+          timedOut: result.timedOut,
+        },
+        args.challenge,
+      )
       return {
         title: `CTF pwntools: ${basename(script)}`,
         output: section("运行结果", formatCommands([result])),
@@ -226,14 +232,18 @@ export const pwntools = tool({
       command: [python, "-c", cyclicProgram(length, wordSize, args.crashValue)],
       timeoutMs,
     })
-    await appendRun(ctx, {
-      type: "pwntools",
-      action: "cyclic",
-      length,
-      wordSize,
-      crashValue: args.crashValue,
-      exitCode: result.exitCode,
-    })
+    await appendRun(
+      ctx,
+      {
+        type: "pwntools",
+        action: "cyclic",
+        length,
+        wordSize,
+        crashValue: args.crashValue,
+        exitCode: result.exitCode,
+      },
+      args.challenge,
+    )
     return {
       title: "CTF pwntools: cyclic",
       output: section("cyclic", formatCommands([result])),
