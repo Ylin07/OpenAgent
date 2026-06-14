@@ -2184,9 +2184,12 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
   const collapsed = createMemo(() => collapseToolOutput(rawOutput(), 8, Math.max(80, props.width * 4)))
   const stateTitle = createMemo(() => ("title" in props.part.state ? props.part.state.title : undefined))
   const title = createMemo(() => terminalCommandTitle(props.part.tool, inputData(), metadata(), stateTitle()))
-  const titlePrefix = createMemo(() => terminalToolPrefix(props.part.tool))
+  const titlePrefix = createMemo(() => terminalToolPrefix(props.part.tool, title()))
+  const titleLine = createMemo(() => [titlePrefix(), title()].filter(Boolean).join(" "))
   const inputSummary = createMemo(() => terminalInputSummary(inputData()))
-  const compactTitle = createMemo(() => Locale.truncate(title(), Math.max(12, props.width - 8)))
+  const compactTitle = createMemo(() => Locale.truncateMiddle(titleLine(), Math.max(12, props.width - 8)))
+  const expandedTitle = createMemo(() => wrapTerminalText(titleLine(), Math.max(20, props.width - 4)))
+  const visibleOutput = createMemo(() => (props.expanded ? rawOutput() : collapsed().output))
   const statusColor = createMemo(() => {
     if (props.part.state.status === "completed") return theme.success
     if (props.part.state.status === "error") return theme.error
@@ -2198,7 +2201,7 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
     <box marginTop={1} flexShrink={0}>
       <box flexDirection="row" justifyContent="space-between" gap={1} onMouseUp={props.onToggle}>
         <text fg={theme.info} wrapMode="none">
-          {props.expanded ? "-" : "+"} {titlePrefix()} {compactTitle()}
+          {props.expanded ? "-" : "+"} {compactTitle()}
         </text>
         <text fg={statusColor()} wrapMode="none">
           ■
@@ -2206,15 +2209,17 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
       </box>
       <Show when={props.expanded}>
         <box border={["left"]} borderColor={theme.borderSubtle} paddingLeft={1}>
-          <text fg={theme.info}>
-            {titlePrefix()} {title()}
+          <text fg={theme.info} wrapMode="word">
+            {expandedTitle()}
           </text>
           <Show when={props.part.tool !== ShellID.ToolID && props.part.tool !== "bash" && inputSummary()}>
-            <text fg={theme.textMuted}>{inputSummary()}</text>
+            <text fg={theme.textMuted} wrapMode="word">
+              {inputSummary()}
+            </text>
           </Show>
           <Show when={rawOutput()} fallback={<text fg={theme.textMuted}>waiting for output</text>}>
-            <text fg={theme.text}>{collapsed().output}</text>
-            <Show when={collapsed().overflow}>
+            <text fg={theme.text}>{visibleOutput()}</text>
+            <Show when={collapsed().overflow && !props.expanded}>
               <text fg={theme.textMuted}>… output truncated</text>
             </Show>
           </Show>
@@ -2224,17 +2229,22 @@ function TerminalToolBlock(props: { part: ToolPart; width: number; expanded: boo
   )
 }
 
-function terminalToolPrefix(tool: string) {
+function terminalToolPrefix(tool: string, title = "") {
   if (tool === ShellID.ToolID || tool === "bash") return "$"
+  if (tool.startsWith("ctf_")) return ""
+  if (title.trim().startsWith(">")) return ""
   return ">"
 }
 
 function terminalCommandTitle(tool: string, inputData: any, metadata: any, stateTitle?: string) {
   if (tool === ShellID.ToolID) return inputData?.command ?? "shell"
   if (tool === "bash") return inputData?.command ?? "bash"
-  if (typeof stateTitle === "string") return stateTitle
-  if (typeof metadata?.title === "string") return metadata.title
-  if (typeof inputData?.title === "string") return inputData.title
+  const fromState = normalizeTerminalTitle(stateTitle)
+  if (fromState) return fromState
+  const fromMetadata = normalizeTerminalTitle(metadata?.title)
+  if (fromMetadata) return fromMetadata
+  const fromInput = normalizeTerminalTitle(inputData?.title)
+  if (fromInput) return fromInput
   if (tool.startsWith("ctf_")) return `${tool} ${ctfToolTarget(inputData)}`.trim()
   if (tool === "apply_patch") return "apply_patch"
   if (tool === "edit") return `edit ${inputData?.filePath ?? ""}`.trim()
@@ -2244,6 +2254,26 @@ function terminalCommandTitle(tool: string, inputData: any, metadata: any, state
   if (tool === "glob") return `glob ${inputData?.pattern ?? ""}`.trim()
   if (tool === "task") return `task ${metadata?.description ?? inputData?.description ?? ""}`.trim()
   return tool
+}
+
+function normalizeTerminalTitle(value: unknown) {
+  if (typeof value !== "string") return
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function wrapTerminalText(text: string, width: number) {
+  if (width <= 0) return text
+  return text
+    .split("\n")
+    .flatMap((line) => {
+      const chars = Array.from(line)
+      if (chars.length <= width) return [line]
+      const chunks: string[] = []
+      for (let i = 0; i < chars.length; i += width) chunks.push(chars.slice(i, i + width).join(""))
+      return chunks
+    })
+    .join("\n")
 }
 
 function ctfToolTarget(inputData: any) {
