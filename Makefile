@@ -40,7 +40,7 @@ install-tools:
 	bash scripts/install-env.sh
 
 build:
-	bun run --cwd packages/openagent script/build.ts --single --skip-install
+	bun run --cwd packages/openagent script/build.ts --skip-install
 
 run:
 	./packages/openagent/dist/openagent-linux-x64/bin/openagent

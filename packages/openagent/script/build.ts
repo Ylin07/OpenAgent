@@ -27,12 +27,10 @@ const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
 
-const target = { os: "linux", arch: "x64" as const }
-
 await $`rm -rf dist`
 
 if (!skipInstall) {
-  await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
+  await $`bun install @opentui/core@${pkg.dependencies["@opentui/core"]}`
 }
 
 const name = `openagent-linux-x64`
@@ -65,7 +63,6 @@ await Bun.build({
     target: compileTarget as any,
     outfile: `dist/${name}/bin/openagent`,
     execArgv: [`--user-agent=openagent/${scriptVersion}`, "--use-system-ca", "--"],
-    windows: {},
   },
   entrypoints: ["./src/index.ts", parserWorker, workerPath],
   define: {
