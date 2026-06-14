@@ -1,6 +1,8 @@
 ---
 name: ctf-triage
 description: "必须用于授权 CTF 初始分诊：题型不明确、混合题型或刚开始时，先分类为 reverse/pwn/web/mixed，再路由到 ctf-pwn、ctf-reverse、ctf-web，并按需读取 .openagent/docs 索引。"
+references:
+  - ../../docs/INDEX.md
 ---
 
 # CTF 初始分诊

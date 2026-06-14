@@ -1,6 +1,8 @@
 ---
 name: ctf-reverse
 description: "必须用于授权 CTF reverse engineering：checker binary、PE/ELF/APK、strings/XREF、encoding/crypto、maze、VM bytecode、obfuscation、anti-debug、SMC、unpacking、Z3、angr、Unicorn、solver script。"
+references:
+  - ../../docs/REVERSE/index.md
 ---
 
 # CTF REVERSE

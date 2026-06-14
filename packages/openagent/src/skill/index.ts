@@ -31,6 +31,7 @@ const SKILL_PATTERN = "**/SKILL.md"
 export const Info = Schema.Struct({
   name: Schema.String,
   description: Schema.optional(Schema.String),
+  references: Schema.optional(Schema.Array(Schema.String)),
   location: Schema.String,
   content: Schema.String,
 })
@@ -44,11 +45,13 @@ const Issue = Schema.StructWithRest(
   [Schema.Record(Schema.String, Schema.Unknown)],
 )
 
-function isSkillFrontmatter(data: unknown): data is { name: string; description?: string } {
+function isSkillFrontmatter(data: unknown): data is { name: string; description?: string; references?: string[] } {
   return (
     isRecord(data) &&
     typeof data.name === "string" &&
-    (data.description === undefined || typeof data.description === "string")
+    (data.description === undefined || typeof data.description === "string") &&
+    (data.references === undefined ||
+      (Array.isArray(data.references) && data.references.every((item) => typeof item === "string")))
   )
 }
 
@@ -128,6 +131,7 @@ const add = Effect.fnUntraced(function* (state: State, match: string, events: Ev
   state.skills[md.data.name] = {
     name: md.data.name,
     description: md.data.description,
+    references: md.data.references,
     location: match,
     content: md.content,
   }

@@ -1,6 +1,8 @@
 ---
 name: ctf-pwn
 description: "必须用于授权 CTF pwn 和 binary exploitation：ELF service、stack overflow、ROP、ret2libc、ret2csu、ret2dlresolve、format string、heap、FSOP、seccomp ORW、kernel/QEMU、crash offset、libc leak、pwntools exploit。"
+references:
+  - ../../docs/PWN/index.md
 ---
 
 # CTF PWN

@@ -1,14 +1,14 @@
-# Project Agent Instructions
+# 项目 Agent 指令
 
-## Language
+## 语言
 
-- Always communicate with the user in Simplified Chinese unless the user explicitly asks for another language.
-- Use Chinese for visible reasoning summaries, plans, tool-use explanations, observations, progress updates, reports, and final answers.
-- Keep code, commands, filenames, paths, flags, protocol fields, API names, symbols, registers, exploit primitives, and vulnerability names in their original form when translation would reduce precision.
-- Do not expose hidden chain-of-thought. When reasoning is useful, provide a concise Chinese rationale, checklist, or decision summary instead.
+- 除非用户明确要求使用其他语言，否则始终使用简体中文与用户沟通。
+- 可见的推理摘要、计划、工具使用说明、观察、进度更新、报告和最终回答都使用中文。
+- 当翻译会降低精确性时，代码、命令、文件名、路径、flags、协议字段、API 名称、符号、寄存器、exploit primitives 和漏洞名称保持原文。
+- 不暴露隐藏 chain-of-thought。需要说明推理时，改为提供简洁的中文依据、检查清单或决策摘要。
 
-## Style
+## 风格
 
-- Be direct and technical.
-- Prefer actionable next steps over broad explanations.
-- When working on CTF tasks, keep scope limited to authorized CTF, lab, wargame, or training targets.
+- 直接、技术化。
+- 优先给出可执行的下一步，而不是泛泛解释。
+- 处理 CTF 任务时，范围必须限制在授权 CTF、lab、wargame 或 training 目标内。
