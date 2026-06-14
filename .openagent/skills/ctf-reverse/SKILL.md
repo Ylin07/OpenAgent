@@ -1,8 +1,6 @@
 ---
 name: ctf-reverse
 description: "必须用于授权 CTF reverse engineering：checker binary、PE/ELF/APK、strings/XREF、encoding/crypto、maze、VM bytecode、obfuscation、anti-debug、SMC、unpacking、Z3、angr、Unicorn、solver script。"
-references:
-  - ../../docs/REVERSE/index.md
 ---
 
 # CTF REVERSE
@@ -16,19 +14,20 @@ references:
 ## 必须执行顺序
 
 1. 必须调用 `ctf_status`，除非本轮会话已经调用过。
-2. reverse 子类型不明确时，必须先读取 `../../docs/REVERSE/index.md`。
+2. reverse 子类型不明确时，必须先调用 `ctf_doc domain="reverse" topic="index"`。
 3. 必须调用 `ctf_reverse`，`deep=false`，收集 file type、strings、headers、symbols、可疑字符串。
-4. 出现 packed、高熵、OEP、anti-debug 证据时，必须先调用 `ctf_unpack action="identify"`，禁止直接陷入静态反编译。
-5. 必须用 `ctf_note` 记录当前路径和证据。
+4. 必须读取 `ctf_reverse` 输出中的 `Required docs`，逐项调用 `ctf_doc`。未完成这些 `ctf_doc` 前禁止写 solver 或进入深度还原。
+5. 出现 packed、高熵、OEP、anti-debug 证据时，必须先调用 `ctf_unpack action="identify"`，禁止直接陷入静态反编译。
+6. 必须用 `ctf_note` 记录当前路径和证据。
 
 ## 专题文档强制路由
 
-必须只读取和证据匹配的专题：
+必须只通过 `ctf_doc` 读取和证据匹配的专题：
 
-- Plain checker、strings、XREF、输入函数、比较函数、动态调试、solver skeleton：读取 `../../docs/REVERSE/basic-workflow.md`。
-- Base64、TEA/XTEA/XXTEA、RC4、MD5/hash、AES/DES、maze、VM/opcode dispatcher：读取 `../../docs/REVERSE/algorithm-maze-vm.md`。
-- 花指令、SMC、控制流平坦化、anti-debug、PE shell/unpacking、OEP、IAT repair：读取 `../../docs/REVERSE/obfuscation-anti-debug-unpack.md`。
-- Z3、angr、Unicorn、LD_PRELOAD、IDA/Ghidra automation：读取 `../../docs/REVERSE/tools.md`。
+- Plain checker、strings、XREF、输入函数、比较函数、动态调试、solver skeleton：调用 `ctf_doc domain="reverse" topic="basic-workflow"`。
+- Base64、TEA/XTEA/XXTEA、RC4、MD5/hash、AES/DES、maze、VM/opcode dispatcher：调用 `ctf_doc domain="reverse" topic="algorithm-maze-vm"`。
+- 花指令、SMC、控制流平坦化、anti-debug、PE shell/unpacking、OEP、IAT repair：调用 `ctf_doc domain="reverse" topic="obfuscation-anti-debug-unpack"`。
+- Z3、angr、Unicorn、LD_PRELOAD、IDA/Ghidra automation：调用 `ctf_doc domain="reverse" topic="tools"`。
 
 ## 工具调用协议
 

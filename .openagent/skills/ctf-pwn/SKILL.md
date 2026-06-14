@@ -1,8 +1,6 @@
 ---
 name: ctf-pwn
 description: "必须用于授权 CTF pwn 和 binary exploitation：ELF service、stack overflow、ROP、ret2libc、ret2csu、ret2dlresolve、format string、heap、FSOP、seccomp ORW、kernel/QEMU、crash offset、libc leak、pwntools exploit。"
-references:
-  - ../../docs/PWN/index.md
 ---
 
 # CTF PWN
@@ -17,19 +15,20 @@ references:
 ## 必须执行顺序
 
 1. 必须调用 `ctf_status`，除非本轮会话已经调用过。
-2. pwn 子类型不明确时，必须先读取 `../../docs/PWN/index.md`。
+2. pwn 子类型不明确时，必须先调用 `ctf_doc domain="pwn" topic="index"`。
 3. 必须调用 `ctf_pwn`，`deep=false`，收集 architecture、`checksec`、symbols、imports、strings、可选 remote banner。
-4. 必须用 `ctf_note` 记录当前 primitive 假设和证据。
-5. 必须按“事实 -> primitive -> leak/控制流 -> exploit -> 本地验证 -> 授权远程验证”的顺序推进。
+4. 必须读取 `ctf_pwn` 输出中的 `Required docs`，逐项调用 `ctf_doc`。未完成这些 `ctf_doc` 前禁止调用 `ctf_rop`、`ctf_libc`、`ctf_heap` 或写 exploit。
+5. 必须用 `ctf_note` 记录当前 primitive 假设和证据。
+6. 必须按“事实 -> primitive -> leak/控制流 -> exploit -> 本地验证 -> 授权远程验证”的顺序推进。
 
 ## 专题文档强制路由（一定要进行这一步!!!）
 
-必须只读取和证据匹配的专题,一定要遵循以下规则：
+必须只通过 `ctf_doc` 读取和证据匹配的专题，一定要遵循以下规则：
 
-- Stack overflow、ROP、ret2text、ret2shellcode、ret2syscall、ret2libc、ret2csu、ret2dlresolve、SROP、Canary：读取 `../../docs/PWN/stack-rop.md`。
-- Format string leak 或 `%n` 任意写：读取 `../../docs/PWN/format-string.md`。
-- 菜单堆、UAF、double free、tcache、fastbin、unsorted bin、unlink、off-by-one、FSOP：读取 `../../docs/PWN/heap-fsop.md`。
-- seccomp ORW、kernel pwn、race、QEMU、browser/JS engine：读取 `../../docs/PWN/advanced.md`。
+- Stack overflow、ROP、ret2text、ret2shellcode、ret2syscall、ret2libc、ret2csu、ret2dlresolve、SROP、Canary：调用 `ctf_doc domain="pwn" topic="stack-rop"`。
+- Format string leak 或 `%n` 任意写：调用 `ctf_doc domain="pwn" topic="format-string"`。
+- 菜单堆、UAF、double free、tcache、fastbin、unsorted bin、unlink、off-by-one、FSOP：调用 `ctf_doc domain="pwn" topic="heap-fsop"`。
+- seccomp ORW、kernel pwn、race、QEMU、browser/JS engine：调用 `ctf_doc domain="pwn" topic="advanced"`。
 
 ## 工具调用协议
 

@@ -13,9 +13,15 @@ import {
   selectPwnBinary,
   type CommandSpec,
 } from "./core.ts"
-import { appendRun, challengeArgs, writeNote } from "./workspace.ts"
+import { appendRun, challengeArgs, updateCtfState, writeNote } from "./workspace.ts"
 
 const z = tool.schema
+
+type RequiredDoc = {
+  domain: "pwn"
+  topic: "index" | "stack-rop" | "format-string" | "heap-fsop" | "advanced"
+  reason: string
+}
 
 export const pwn = tool({
   description:
@@ -91,6 +97,7 @@ export const pwn = tool({
       ? summarizeDeepPwn(results.find((item) => item.label === "deep objdump disassembly")?.stdout ?? "")
       : ""
     const commandText = formatCommands(results.filter((item) => item.label !== "deep objdump disassembly"))
+    const requiredDocs = recommendPwnDocs({ risky, stringHints, deepText, banner, imports, strings })
 
     await appendRun(
       ctx,
@@ -98,6 +105,25 @@ export const pwn = tool({
         type: "pwn",
         binary,
         remote: args.remoteHost && args.remotePort ? `${args.remoteHost}:${args.remotePort}` : undefined,
+        requiredDocs,
+      },
+      args.challenge,
+    )
+    await updateCtfState(
+      ctx,
+      (state) => {
+        state.requiredDocs = {
+          ...(state.requiredDocs && typeof state.requiredDocs === "object" && !Array.isArray(state.requiredDocs)
+            ? state.requiredDocs
+            : {}),
+          pwn: requiredDocs.map((item) => ({
+            ...item,
+            source: "ctf_pwn",
+            binary,
+            createdAt: new Date().toISOString(),
+          })),
+        }
+        return state
       },
       args.challenge,
     )
@@ -109,8 +135,8 @@ export const pwn = tool({
         .filter(Boolean)
         .join("\n\n"),
       next: args.deep
-        ? "优先验证 deep 摘要里的危险调用点；如可控崩溃，生成 cyclic 并定位 offset。"
-        : "确认输入面和 crash primitive；如可控崩溃，生成 cyclic 并定位 offset。可用 deep=true 直接摘要可疑函数。",
+        ? `先调用 ctf_doc 读取 required docs，再验证 deep 摘要里的危险调用点；如可控崩溃，生成 cyclic 并定位 offset。`
+        : `先调用 ctf_doc 读取 required docs，再确认输入面和 crash primitive；如可控崩溃，生成 cyclic 并定位 offset。可用 deep=true 直接摘要可疑函数。`,
       tags: ["pwn", basename(binary)],
       challenge: args.challenge,
     })
@@ -124,7 +150,9 @@ export const pwn = tool({
         args.deep ? section("Deep 可疑函数摘要", deepText || "未在反汇编中识别到直接危险调用点。") : "",
         section("可疑字符串", stringHints || "默认 hint 列表未命中常见 pwn 字符串。"),
         banner ? section("Remote banner", code(banner)) : "",
+        section("Required docs", formatRequiredDocs(requiredDocs)),
         section("下一步", [
+          "- 先调用上面 Required docs 对应的 ctf_doc，确认文档清单已进入 .ctf/state.json。",
           args.deep ? "- 优先复核 Deep 摘要命中的函数，通常无需再手动反编译同一调用链。" : "",
           "- 用 cyclic pattern 验证 crash 和 offset。",
           "- 根据 NX/PIE/canary/RELRO 决定 ret2win、ret2libc、ROP、format string、heap 或逻辑路径。",
@@ -135,6 +163,50 @@ export const pwn = tool({
     }
   },
 })
+
+function recommendPwnDocs(input: {
+  risky: string
+  stringHints: string
+  deepText: string
+  banner: string
+  imports: string
+  strings: string
+}): RequiredDoc[] {
+  const haystack = [input.risky, input.stringHints, input.deepText, input.banner, input.imports, input.strings].join("\n")
+  const docs: RequiredDoc[] = [{ domain: "pwn", topic: "index", reason: "pwn triage 后先读取 PWN 索引，确认题型路由。" }]
+  if (/%(?:\d+\$)?[pxsdn]/i.test(haystack) || /\b(?:printf|fprintf|sprintf|snprintf|vprintf)\b/i.test(input.deepText)) {
+    docs.push({ domain: "pwn", topic: "format-string", reason: "发现 format string token 或 printf-family 调用，需要确认 leak/write 路线。" })
+  }
+  if (/\b(?:malloc|calloc|realloc|free)\b/i.test(haystack) || /\b(?:add|delete|edit|show|chunk|tcache|fastbin|unsorted)\b/i.test(haystack)) {
+    docs.push({ domain: "pwn", topic: "heap-fsop", reason: "发现 allocator/menu/chunk 线索，需要确认 heap/FSOP 路线。" })
+  }
+  if (/\b(?:seccomp|prctl|sandbox|orw|qemu|kernel|ioctl|bzImage|rootfs)\b/i.test(haystack)) {
+    docs.push({ domain: "pwn", topic: "advanced", reason: "发现 seccomp/ORW/kernel/QEMU 或 syscall 线索，需要确认高级 PWN 路线。" })
+  }
+  if (/\b(?:gets|scanf|strcpy|strcat|read|recv|overflow|canary|libc|rop|system|bin\/sh|ret2|GOT|PLT)\b/i.test(haystack)) {
+    docs.push({ domain: "pwn", topic: "stack-rop", reason: "发现栈输入、ROP、libc、GOT/PLT 或 shell 字符串线索，需要确认 stack/ROP 路线。" })
+  }
+  return dedupeRequiredDocs(docs)
+}
+
+function dedupeRequiredDocs(docs: RequiredDoc[]) {
+  const seen = new Set<string>()
+  return docs.filter((doc) => {
+    const key = `${doc.domain}/${doc.topic}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function formatRequiredDocs(docs: RequiredDoc[]) {
+  return docs
+    .map(
+      (doc) =>
+        `- ctf_doc domain="${doc.domain}" topic="${doc.topic}" reason="${doc.reason.replaceAll('"', "'")}"`,
+    )
+    .join("\n")
+}
 
 function remoteBanner(host: string, port: number, timeoutMs: number) {
   return new Promise<string>((resolveBanner, reject) => {

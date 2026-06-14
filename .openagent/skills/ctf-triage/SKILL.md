@@ -1,8 +1,6 @@
 ---
 name: ctf-triage
 description: "必须用于授权 CTF 初始分诊：题型不明确、混合题型或刚开始时，先分类为 reverse/pwn/web/mixed，再路由到 ctf-pwn、ctf-reverse、ctf-web，并按需读取 .openagent/docs 索引。"
-references:
-  - ../../docs/INDEX.md
 ---
 
 # CTF 初始分诊
@@ -16,14 +14,15 @@ references:
 ## 必须执行顺序
 
 1. 必须先调用 `ctf_status`，除非本轮会话已经调用过。
-2. 必须列清输入形态：本地文件/目录、binary、archive、URL、host/port、Docker/QEMU 文件、源码或纯文本描述。
-3. 必须基于证据选择一个首个 triage 工具：
+2. 必须先调用 `ctf_doc domain="general" topic="index"`，读取总索引并写入 `.ctf/state.json`。
+3. 必须列清输入形态：本地文件/目录、binary、archive、URL、host/port、Docker/QEMU 文件、源码或纯文本描述。
+4. 必须基于证据选择一个首个 triage 工具：
    - 本地未知文件/目录：调用 `ctf_reverse`，`deep=false`。
    - ELF pwn、远程二进制服务、crash、libc、ROP、heap 提示：调用 `ctf_pwn`，`deep=false`。
    - 授权 URL 或本地 Web 服务：调用 `ctf_web`，`includeCommon=true`。
    - 壳、高熵、OEP、anti-debug 提示：调用 `ctf_unpack`，`action="identify"`。
-4. 必须用 `ctf_note` 记录分类、证据和下一步。
-5. 必须加载对应领域 skill 后继续：`ctf-pwn`、`ctf-reverse` 或 `ctf-web`。
+5. 必须用 `ctf_note` 记录分类、证据和下一步。
+6. 必须加载对应领域 skill 后继续：`ctf-pwn`、`ctf-reverse` 或 `ctf-web`。
 
 ## 强制路由规则
 
@@ -34,12 +33,12 @@ references:
 
 ## Docs 读取规则
 
-- 必须把 docs 当作按需 reference，禁止一次性读取全部专题。
-- 总索引：`../../docs/INDEX.md`。
-- PWN 索引：`../../docs/PWN/index.md`。
-- REVERSE 索引：`../../docs/REVERSE/index.md`。
-- `printf(buf)`、`%p/%n` 证据必须进入 `../../docs/PWN/format-string.md`。
-- VM dispatcher、opcode、`pc/sp/register` 证据必须进入 `../../docs/REVERSE/algorithm-maze-vm.md`。
+- 必须用 `ctf_doc` 读取 docs，禁止用普通 Read 代替。
+- 总索引：`ctf_doc domain="general" topic="index"`。
+- PWN 索引：`ctf_doc domain="pwn" topic="index"`。
+- REVERSE 索引：`ctf_doc domain="reverse" topic="index"`。
+- `printf(buf)`、`%p/%n` 证据必须调用 `ctf_doc domain="pwn" topic="format-string"`。
+- VM dispatcher、opcode、`pc/sp/register` 证据必须调用 `ctf_doc domain="reverse" topic="algorithm-maze-vm"`。
 
 ## 记录要求
 

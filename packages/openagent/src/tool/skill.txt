@@ -2,6 +2,4 @@
 
 使用此工具将该 skill 的指令和资源注入当前对话。输出可能包含详细工作流指导，以及同一 skill 目录下 scripts、files 等资源引用。
 
-如果 skill 声明了 references，工具输出会包含这些 reference 文件内容。后续执行必须优先依据这些已加载 reference 做路由和检查。
-
 skill 名称必须匹配 system prompt 中列出的某个 skill。

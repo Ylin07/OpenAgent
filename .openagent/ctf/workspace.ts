@@ -29,6 +29,8 @@ type CtfWorkspace = {
   challengeSlug?: string
 }
 
+export type CtfState = Record<string, unknown>
+
 export function ctfRoot(ctx: ToolContext) {
   return normalizePath(".ctf", ctx)
 }
@@ -87,6 +89,60 @@ export async function ensureCtfWorkspace(ctx: ToolContext, challenge?: string): 
 async function append(path: string, content: string) {
   const previous = await readFile(path, "utf8").catch(() => "")
   await writeFile(path, previous + content)
+}
+
+export async function readCtfState(ctx: ToolContext, challenge?: string): Promise<CtfState> {
+  const ws = await ensureCtfWorkspace(ctx, challenge)
+  const raw = await readFile(ws.state, "utf8").catch(() => "")
+  if (!raw.trim()) return {}
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+export async function writeCtfState(ctx: ToolContext, state: CtfState, challenge?: string) {
+  const ws = await ensureCtfWorkspace(ctx, challenge)
+  await writeFile(ws.state, JSON.stringify(state, null, 2) + "\n")
+  return ws
+}
+
+export async function updateCtfState(
+  ctx: ToolContext,
+  update: (state: CtfState) => CtfState | void,
+  challenge?: string,
+) {
+  const state = await readCtfState(ctx, challenge)
+  const next = update(state) ?? state
+  return await writeCtfState(ctx, next, challenge)
+}
+
+export async function assertRequiredDocsLoaded(ctx: ToolContext, domain: "pwn" | "reverse", challenge?: string) {
+  const state = await readCtfState(ctx, challenge)
+  const requiredDocs = state.requiredDocs && typeof state.requiredDocs === "object" ? state.requiredDocs : {}
+  const required = Array.isArray((requiredDocs as Record<string, unknown>)[domain])
+    ? ((requiredDocs as Record<string, unknown>)[domain] as Array<Record<string, unknown>>)
+    : []
+  if (!required.length) return
+
+  const docs = state.docs && typeof state.docs === "object" ? (state.docs as Record<string, unknown>) : {}
+  const missing = required
+    .map((item) => ({
+      domain: typeof item.domain === "string" ? item.domain : domain,
+      topic: typeof item.topic === "string" ? item.topic : undefined,
+      reason: typeof item.reason === "string" ? item.reason : undefined,
+    }))
+    .filter((item): item is { domain: string; topic: string; reason?: string } => Boolean(item.topic))
+    .filter((item) => docs[`${item.domain}/${item.topic}`] === undefined)
+
+  if (!missing.length) return
+
+  const commands = missing
+    .map((item) => `ctf_doc domain="${item.domain}" topic="${item.topic}"${item.reason ? ` reason="${item.reason.replaceAll('"', "'")}"` : ""}`)
+    .join("\n")
+  throw new Error(`BLOCKED: 必须先读取 required docs。\n${commands}`)
 }
 
 export async function appendRun(ctx: ToolContext, event: Record<string, unknown>, challenge?: string) {

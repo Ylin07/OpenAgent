@@ -12,7 +12,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, assertRequiredDocsLoaded, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -305,6 +305,7 @@ export const libc = tool({
     ...challengeArgs(),
   },
   async execute(args, ctx) {
+    await assertRequiredDocsLoaded(ctx, "pwn", args.challenge)
     const timeoutMs = clampTimeout(args.timeoutMs)
     const python = args.python?.trim() || "python3"
     const binary = args.binary ? await selectPwnBinary(args.binary, ctx) : undefined

@@ -11,7 +11,7 @@ import {
   runCommand,
   section,
 } from "./core.ts"
-import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, assertRequiredDocsLoaded, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -88,6 +88,7 @@ export const heap = tool({
     ...challengeArgs(),
   },
   async execute(args, ctx) {
+    await assertRequiredDocsLoaded(ctx, "pwn", args.challenge)
     const timeoutMs = clampTimeout(args.timeoutMs)
     if (args.action === "snapshot") {
       if (!args.pid) throw new Error("action=snapshot 需要 pid")

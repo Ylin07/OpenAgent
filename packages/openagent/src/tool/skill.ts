@@ -6,7 +6,6 @@ import { Ripgrep } from "@openagent-ai/core/filesystem/ripgrep"
 import { Skill } from "../skill"
 import * as Tool from "./tool"
 import DESCRIPTION from "./skill.txt"
-import { FSUtil } from "@openagent-ai/core/fs-util"
 
 export const Parameters = Schema.Struct({
   name: Schema.String.annotate({ description: "available_skills 中的 skill 名称" }),
@@ -17,7 +16,6 @@ export const SkillTool = Tool.define(
   Effect.gen(function* () {
     const skill = yield* Skill.Service
     const rg = yield* Ripgrep.Service
-    const fs = yield* FSUtil.Service
 
     return {
       description: DESCRIPTION,
@@ -37,17 +35,6 @@ export const SkillTool = Tool.define(
 
           const dir = path.dirname(info.location)
           const base = pathToFileURL(dir).href
-          const references = yield* Effect.forEach(
-            info.references ?? [],
-            (reference) =>
-              Effect.gen(function* () {
-                const resolved = path.resolve(dir, reference)
-                const text = yield* fs.readFileStringSafe(resolved).pipe(Effect.orElseSucceed(() => ""))
-                if (!text) return undefined
-                return [`<reference path="${resolved}">`, text.trim(), "</reference>"].join("\n")
-              }),
-            { concurrency: 4 },
-          )
           const limit = 10
           const files = yield* rg.files({ cwd: dir, follow: false, hidden: true, signal: ctx.abort }).pipe(
             Stream.filter((file) => !file.includes("SKILL.md")),
@@ -69,15 +56,6 @@ export const SkillTool = Tool.define(
               "Relative paths in this skill (e.g., scripts/, reference/) are relative to this base directory.",
               "Note: file list is sampled.",
               "",
-              ...(references.length
-                ? [
-                    "<skill_references>",
-                    "These reference files were declared by the skill and have already been loaded.",
-                    ...references.filter((reference) => reference !== undefined),
-                    "</skill_references>",
-                    "",
-                  ]
-                : []),
               "<skill_files>",
               files,
               "</skill_files>",

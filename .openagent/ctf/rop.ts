@@ -13,7 +13,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, assertRequiredDocsLoaded, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -133,6 +133,7 @@ export const rop = tool({
     ...challengeArgs(),
   },
   async execute(args, ctx) {
+    await assertRequiredDocsLoaded(ctx, "pwn", args.challenge)
     const binary = await selectPwnBinary(args.binary, ctx)
     const libc = resolveReadableFile(args.libc, ctx.directory)
     const cwd = dirname(binary)

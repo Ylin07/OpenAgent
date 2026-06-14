@@ -12,7 +12,7 @@ import {
   section,
   selectPwnBinary,
 } from "./core.ts"
-import { appendRun, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
+import { appendRun, assertRequiredDocsLoaded, challengeArgs, ensureCtfWorkspace, writeNote } from "./workspace.ts"
 
 const z = tool.schema
 
@@ -151,6 +151,7 @@ export const pwntools = tool({
     }
 
     if (args.action === "template") {
+      await assertRequiredDocsLoaded(ctx, "pwn", args.challenge)
       if ((args.remoteHost && !args.remotePort) || (!args.remoteHost && args.remotePort)) {
         throw new Error("remoteHost 和 remotePort 必须同时提供")
       }
@@ -183,6 +184,7 @@ export const pwntools = tool({
     }
 
     if (args.action === "run") {
+      await assertRequiredDocsLoaded(ctx, "pwn", args.challenge)
       if (!args.script) throw new Error("action=run 必须提供 script")
       const script = normalizePath(args.script, ctx)
       const cwd = args.cwd ? normalizePath(args.cwd, ctx) : dirname(script)

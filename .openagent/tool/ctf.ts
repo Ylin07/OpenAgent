@@ -1,4 +1,5 @@
 export { note, status } from "../ctf/workspace.ts"
+export { doc } from "../ctf/doc.ts"
 export { run } from "../ctf/run.ts"
 export { reverse } from "../ctf/reverse.ts"
 export { pwn } from "../ctf/pwn.ts"
