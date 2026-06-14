@@ -281,7 +281,7 @@ export const ApplyPatchTool = Tool.define(
         const target = change.movePath ?? change.filePath
         return `M ${path.relative(instance.worktree, target).replaceAll("\\", "/")}`
       })
-      let output = `Success. Updated the following files:\n${summaryLines.join("\n")}`
+      let output = `成功。已更新以下文件：\n${summaryLines.join("\n")}`
 
       for (const change of fileChanges) {
         if (change.type === "delete") continue
@@ -289,7 +289,7 @@ export const ApplyPatchTool = Tool.define(
         const block = LSP.Diagnostic.report(target, diagnostics[FSUtil.normalizePath(target)] ?? [])
         if (!block) continue
         const rel = path.relative(instance.worktree, target).replaceAll("\\", "/")
-        output += `\n\nLSP errors detected in ${rel}, please fix:\n${block}`
+        output += `\n\n在 ${rel} 中检测到 LSP 错误，请修复：\n${block}`
       }
 
       return {

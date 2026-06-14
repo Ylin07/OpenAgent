@@ -9,17 +9,17 @@ export function prefix(tokens: string[]) {
 }
 
 /* Generated with following prompt:
-You are generating a dictionary of command-prefix arities for bash-style commands.
-This dictionary is used to identify the "human-understandable command" from an input shell command.### **RULES (follow strictly)**1. Each entry maps a **command prefix string → number**, representing how many **tokens** define the command.
-2. **Flags NEVER count as tokens**. Only subcommands count.
-3. **Longest matching prefix wins**.
-4. **Only include a longer prefix if its arity is different from what the shorter prefix already implies**.   * Example: If `git` is 2, then do **not** include `git checkout`, `git commit`, etc. unless they require *different* arity.
-5. The output must be a **single JSON object**. Each entry should have a comment with an example real world matching command. DO NOT MAKE ANY OTHER COMMENTS. Should be alphabetical
-6. Include the **most commonly used commands** across many stacks and languages. More is better.### **Semantics examples*** `touch foo.txt` → `touch` (arity 1, explicitly listed)
-* `git checkout main` → `git checkout` (because `git` has arity 2)
-* `npm install` → `npm install` (because `npm` has arity 2)
-* `npm run dev` → `npm run dev` (because `npm run` has arity 3)
-* `python script.py` → `python script.py` (default: whole input, not in dictionary)### **Now generate the dictionary.**
+你正在为 bash 风格命令生成 command-prefix arity 字典。
+这个字典用于从输入 shell 命令中识别“人类可理解的命令”。### **规则（严格遵守）**1. 每个条目映射 **command prefix string → number**，表示定义该命令需要多少个 **tokens**。
+2. **Flags 永远不计入 tokens**。只统计 subcommands。
+3. **最长匹配优先**。
+4. **只有当更长 prefix 的 arity 与较短 prefix 隐含的 arity 不同时，才包含更长 prefix**。   * 示例：如果 `git` 是 2，就不要包含 `git checkout`、`git commit` 等，除非它们需要 *不同* arity。
+5. 输出必须是**单个 JSON object**。每个条目应带有一个真实世界匹配命令示例的注释。不要写任何其他注释。应按字母顺序排列。
+6. 覆盖多种技术栈和语言中**最常用的命令**。越多越好。### **语义示例*** `touch foo.txt` → `touch`（arity 1，显式列出）
+* `git checkout main` → `git checkout`（因为 `git` 的 arity 是 2）
+* `npm install` → `npm install`（因为 `npm` 的 arity 是 2）
+* `npm run dev` → `npm run dev`（因为 `npm run` 的 arity 是 3）
+* `python script.py` → `python script.py`（默认：完整输入，不在字典中）### **现在生成字典。**
 */
 const ARITY: Record<string, number> = {
   cat: 1, // cat file.txt

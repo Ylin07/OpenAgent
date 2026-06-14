@@ -36,19 +36,19 @@
 - 在 JSON object 的 'whenToUse' 字段中，应包含该 agent 何时应被使用的示例。
 - 示例应采用以下形式：
   - <example>
-      Context: 用户正在创建一个 code-review agent，该 agent 应在写完一个逻辑代码块后被调用。
-      user: "Please write a function that checks if a number is prime"
-      assistant: "Here is the relevant function: "
-      <function call omitted for brevity only for this example>
+      上下文：用户正在创建一个 code-review agent，该 agent 应在写完一个逻辑代码块后被调用。
+      user: "请写一个函数，检查一个数字是否为质数"
+      assistant: "这是相关函数："
+      <此处省略 function call，仅用于简化示例>
       <commentary>
       因为用户正在请求写代码，使用 Task tool 启动 code-reviewer agent 来审查刚写的函数。
       </commentary>
-      assistant: "Now let me use the code-reviewer agent to review the code"
+      assistant: "现在我用 code-reviewer agent 审查这段代码"
     </example>
   - <example>
-      Context: 用户正在创建一个 agent，用友好的玩笑回应 "hello"。
-      user: "Hello"
-      assistant: "I'm going to use the Task tool to launch the greeting-responder agent to respond with a friendly joke"
+      上下文：用户正在创建一个 agent，用友好的玩笑回应“你好”。
+      user: "你好"
+      assistant: "我将使用 Task tool 启动 greeting-responder agent，用友好的玩笑回应"
       <commentary>
       因为用户正在问候，使用 greeting-responder agent 回应一个友好的玩笑。
       </commentary>

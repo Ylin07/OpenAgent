@@ -35,15 +35,15 @@ export const PlanExitTool = Tool.define(
                 header: "Build Agent",
                 custom: false,
                 options: [
-                  { label: "Yes", description: "切换到 build agent 并开始实现计划" },
-                  { label: "No", description: "留在 plan agent，继续完善计划" },
+                  { label: "是", description: "切换到 build agent 并开始实现计划" },
+                  { label: "否", description: "留在 plan agent，继续完善计划" },
                 ],
               },
             ],
             tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
           })
 
-          if (answers[0]?.[0] === "No") yield* new Question.RejectedError()
+          if (answers[0]?.[0] === "否") yield* new Question.RejectedError()
 
           const messages = yield* session.messages({ sessionID: ctx.sessionID }).pipe(Effect.orDie)
           const lastUser = messages.findLast((item) => item.info.role === "user" && item.info.model)

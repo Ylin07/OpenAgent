@@ -71,7 +71,7 @@ export const WriteTool = Tool.define(
             event: exists ? "change" : "add",
           })
 
-          let output = "Wrote file successfully."
+          let output = "文件写入成功。"
           yield* lsp.touchFile(filepath, "document")
           const diagnostics = yield* lsp.diagnostics()
           const normalizedFilepath = FSUtil.normalizePath(filepath)
@@ -82,11 +82,11 @@ export const WriteTool = Tool.define(
             const block = LSP.Diagnostic.report(current ? filepath : file, issues)
             if (!block) continue
             if (current) {
-              output += `\n\nLSP errors detected in this file, please fix:\n${block}`
+              output += `\n\n在此文件中检测到 LSP 错误，请修复：\n${block}`
               continue
             }
             projectDiagnosticsCount++
-            output += `\n\nLSP errors detected in other files:\n${block}`
+            output += `\n\n在其他文件中检测到 LSP 错误：\n${block}`
           }
 
           return {

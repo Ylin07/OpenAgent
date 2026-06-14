@@ -13,22 +13,22 @@ export const ID = Schema.String.check(Schema.isStartsWith("que")).pipe(
 export type ID = typeof ID.Type
 
 export const Option = Schema.Struct({
-  label: Schema.String.annotate({ description: "Display text (1-5 words, concise)" }),
-  description: Schema.String.annotate({ description: "Explanation of choice" }),
+  label: Schema.String.annotate({ description: "展示文本（1-5 个词，保持简洁）" }),
+  description: Schema.String.annotate({ description: "选项说明" }),
 }).annotate({ identifier: "QuestionV2.Option" })
 export type Option = typeof Option.Type
 
 const base = {
-  question: Schema.String.annotate({ description: "Complete question" }),
-  header: Schema.String.annotate({ description: "Very short label (max 30 chars)" }),
-  options: Schema.Array(Option).annotate({ description: "Available choices" }),
-  multiple: Schema.Boolean.pipe(Schema.optional).annotate({ description: "Allow selecting multiple choices" }),
+  question: Schema.String.annotate({ description: "完整问题" }),
+  header: Schema.String.annotate({ description: "非常短的标签（最多 30 个字符）" }),
+  options: Schema.Array(Option).annotate({ description: "可选项" }),
+  multiple: Schema.Boolean.pipe(Schema.optional).annotate({ description: "允许选择多个选项" }),
 }
 
 export const Info = Schema.Struct({
   ...base,
   custom: Schema.Boolean.pipe(Schema.optional).annotate({
-    description: "Allow typing a custom answer (default: true)",
+    description: "允许输入自定义答案（默认 true）",
   }),
 }).annotate({ identifier: "QuestionV2.Info" })
 export type Info = typeof Info.Type
@@ -55,7 +55,7 @@ export type Answer = typeof Answer.Type
 
 export const Reply = Schema.Struct({
   answers: Schema.Array(Answer).annotate({
-    description: "User answers in order of questions (each answer is an array of selected labels)",
+    description: "用户按问题顺序给出的答案（每个答案都是已选 label 数组）",
   }),
 }).annotate({ identifier: "QuestionV2.Reply" })
 export type Reply = typeof Reply.Type

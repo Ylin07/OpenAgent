@@ -322,7 +322,7 @@ export const defaultLayer = layer.pipe(
 
 export function fmt(list: Info[], opts: { verbose: boolean }) {
   const described = list.filter((skill) => skill.description !== undefined)
-  if (described.length === 0) return "No skills are currently available."
+  if (described.length === 0) return "当前没有可用 skills。"
   if (opts.verbose) {
     return [
       "<available_skills>",

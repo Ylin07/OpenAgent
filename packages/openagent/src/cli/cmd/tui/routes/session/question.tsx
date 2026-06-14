@@ -414,7 +414,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                     </box>
                     <box backgroundColor={other() ? theme.backgroundElement : undefined}>
                       <text fg={other() ? theme.secondary : customPicked() ? theme.success : theme.text}>
-                        {multi() ? `[${customPicked() ? "✓" : " "}] Type your own answer` : "Type your own answer"}
+                        {multi() ? `[${customPicked() ? "✓" : " "}] 输入自定义答案` : "输入自定义答案"}
                       </text>
                     </box>
 
@@ -434,7 +434,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                           })
                         }}
                         initialValue={input()}
-                        placeholder="Type your own answer"
+                        placeholder="输入自定义答案"
                         placeholderColor={theme.textMuted}
                         minHeight={1}
                         maxHeight={6}

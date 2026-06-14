@@ -13,42 +13,42 @@ const DEFAULT_BUFFER = 20_000
 const DEFAULT_KEEP_TOKENS = 8_000
 const TOOL_OUTPUT_MAX_CHARS = 2_000
 const SUMMARY_OUTPUT_TOKENS = 4_096
-const SUMMARY_TEMPLATE = `Output exactly the Markdown structure shown inside <template> and keep the section order unchanged. Do not include the <template> tags in your response.
+const SUMMARY_TEMPLATE = `严格输出 <template> 内展示的 Markdown 结构，并保持 section 顺序不变。回复中不要包含 <template> 标签。
 <template>
-## Goal
-- [single-sentence task summary]
+## 目标
+- [用一句话总结任务]
 
-## Constraints & Preferences
-- [user constraints, preferences, specs, or "(none)"]
+## 约束与偏好
+- [用户约束、偏好、规格，或 "(none)"]
 
-## Progress
-### Done
-- [completed work or "(none)"]
+## 进展
+### 已完成
+- [已完成工作，或 "(none)"]
 
-### In Progress
-- [current work or "(none)"]
+### 进行中
+- [当前工作，或 "(none)"]
 
-### Blocked
-- [blockers or "(none)"]
+### 阻塞
+- [阻塞项，或 "(none)"]
 
-## Key Decisions
-- [decision and why, or "(none)"]
+## 关键决策
+- [决策及原因，或 "(none)"]
 
-## Next Steps
-- [ordered next actions or "(none)"]
+## 下一步
+- [有序的后续动作，或 "(none)"]
 
-## Critical Context
-- [important technical facts, errors, open questions, or "(none)"]
+## 关键上下文
+- [重要技术事实、错误、未决问题，或 "(none)"]
 
-## Relevant Files
-- [file or directory path: why it matters, or "(none)"]
+## 相关文件
+- [文件或目录路径：为什么重要，或 "(none)"]
 </template>
 
-Rules:
-- Keep every section, even when empty.
-- Use terse bullets, not prose paragraphs.
-- Preserve exact file paths, commands, error strings, and identifiers when known.
-- Do not mention the summary process or that context was compacted.`
+规则：
+- 保留每个 section，即使内容为空。
+- 使用简短 bullet，不要写成大段叙述。
+- 已知时保留准确的文件路径、命令、错误字符串和标识符。
+- 不要提及摘要过程，也不要提及上下文被压缩。`
 
 type Entry = {
   readonly seq: number

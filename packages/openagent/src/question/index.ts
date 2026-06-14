@@ -15,33 +15,33 @@ const log = Log.create({ service: "question" })
 
 export const Option = Schema.Struct({
   label: Schema.String.annotate({
-    description: "Display text (1-5 words, concise)",
+    description: "展示文本（1-5 个词，保持简洁）",
   }),
   description: Schema.String.annotate({
-    description: "Explanation of choice",
+    description: "选项说明",
   }),
 }).annotate({ identifier: "QuestionOption" })
 export type Option = Schema.Schema.Type<typeof Option>
 
 const base = {
   question: Schema.String.annotate({
-    description: "Complete question",
+    description: "完整问题",
   }),
   header: Schema.String.annotate({
-    description: "Very short label (max 30 chars)",
+    description: "非常短的标签（最多 30 个字符）",
   }),
   options: Schema.Array(Option).annotate({
-    description: "Available choices",
+    description: "可选项",
   }),
   multiple: Schema.optional(Schema.Boolean).annotate({
-    description: "Allow selecting multiple choices",
+    description: "允许选择多个选项",
   }),
 }
 
 export const Info = Schema.Struct({
   ...base,
   custom: Schema.optional(Schema.Boolean).annotate({
-    description: "Allow typing a custom answer (default: true)",
+    description: "允许输入自定义答案（默认 true）",
   }),
 }).annotate({ identifier: "QuestionInfo" })
 export type Info = Schema.Schema.Type<typeof Info>
@@ -59,7 +59,7 @@ export const Request = Schema.Struct({
   id: QuestionID,
   sessionID: SessionID,
   questions: Schema.Array(Info).annotate({
-    description: "Questions to ask",
+    description: "要询问的问题",
   }),
   tool: Schema.optional(Tool),
 }).annotate({ identifier: "QuestionRequest" })
@@ -70,7 +70,7 @@ export type Answer = Schema.Schema.Type<typeof Answer>
 
 export const Reply = Schema.Struct({
   answers: Schema.Array(Answer).annotate({
-    description: "User answers in order of questions (each answer is an array of selected labels)",
+    description: "用户按问题顺序给出的答案（每个答案都是已选 label 数组）",
   }),
 }).annotate({ identifier: "QuestionReply" })
 export type Reply = Schema.Schema.Type<typeof Reply>

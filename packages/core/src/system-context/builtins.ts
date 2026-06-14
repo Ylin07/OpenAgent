@@ -12,10 +12,10 @@ const builtIns = Layer.effectDiscard(
     const registry = yield* SystemContextRegistry.Service
     const environment = [
       "<env>",
-      `  Working directory: ${location.directory}`,
-      `  Workspace root folder: ${location.project.directory}`,
-      `  Is directory a git repo: ${location.vcs?.type === "git" ? "yes" : "no"}`,
-      `  Platform: ${process.platform}`,
+      `  工作目录：${location.directory}`,
+      `  Workspace 根目录：${location.project.directory}`,
+      `  当前目录是否是 git 仓库：${location.vcs?.type === "git" ? "是" : "否"}`,
+      `  平台：${process.platform}`,
       "</env>",
     ].join("\n")
     const context = SystemContext.combine([
@@ -23,16 +23,23 @@ const builtIns = Layer.effectDiscard(
         key: SystemContext.Key.make("core/environment"),
         codec: Schema.toCodecJson(Schema.String),
         load: Effect.succeed(environment),
-        baseline: (environment) =>
-          ["Here is some useful information about the environment you are running in:", environment].join("\n"),
-        update: (_previous, environment) => ["The environment you are running in is now:", environment].join("\n"),
+        baseline: (environment) => ["以下是你当前运行环境的一些有用信息：", environment].join("\n"),
+        update: (_previous, environment) => ["你当前运行环境已更新为：", environment].join("\n"),
       }),
       SystemContext.make({
         key: SystemContext.Key.make("core/date"),
         codec: Schema.toCodecJson(Schema.String),
-        load: DateTime.nowAsDate.pipe(Effect.map((date) => date.toDateString())),
-        baseline: (date) => `Today's date: ${date}`,
-        update: (_previous, date) => `Today's date is now: ${date}`,
+        load: DateTime.nowAsDate.pipe(
+          Effect.map((date) =>
+            [
+              date.getFullYear(),
+              String(date.getMonth() + 1).padStart(2, "0"),
+              String(date.getDate()).padStart(2, "0"),
+            ].join("-"),
+          ),
+        ),
+        baseline: (date) => `今天日期：${date}`,
+        update: (_previous, date) => `今天日期已更新为：${date}`,
       }),
     ])
 

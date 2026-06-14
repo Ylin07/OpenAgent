@@ -31,9 +31,8 @@ export const layer = Layer.effectDiscard(
         codec: Schema.toCodecJson(Files),
         load: Effect.succeed(value),
         baseline: render,
-        update: (_previous, current) =>
-          `These instructions replace all previously loaded ambient instructions.\n\n${render(current)}`,
-        removed: () => "Previously loaded instructions no longer apply.",
+        update: (_previous, current) => `这些指令会替换之前加载的所有环境指令。\n\n${render(current)}`,
+        removed: () => "之前加载的指令不再适用。",
       })
 
     const observe = Effect.fn("InstructionContext.observe")(function* () {

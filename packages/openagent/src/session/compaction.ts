@@ -502,9 +502,9 @@ export const layer = Layer.effect(
             })
             const text =
               (input.overflow
-                ? "The previous request exceeded the provider's size limit due to large media attachments. The conversation was compacted and media files were removed from context. If the user was asking about attached images or files, explain that the attachments were too large to process and suggest they try again with smaller or fewer files.\n\n"
+                ? "上一次请求因媒体附件过大而超过 provider 大小限制。对话已被压缩，媒体文件已从上下文中移除。如果用户询问的是附加图片或文件，请说明附件太大无法处理，并建议用户改用更小或更少的文件重试。\n\n"
                 : "") +
-              "Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed."
+              "如果还有下一步就继续；如果不确定如何推进，请停下来向用户澄清。"
             yield* session.updatePart({
               id: PartID.ascending(),
               messageID: continueMsg.id,
