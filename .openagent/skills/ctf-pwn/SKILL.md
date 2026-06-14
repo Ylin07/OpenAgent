@@ -20,9 +20,9 @@ description: "必须用于授权 CTF pwn 和 binary exploitation：ELF service�
 4. 必须用 `ctf_note` 记录当前 primitive 假设和证据。
 5. 必须按“事实 -> primitive -> leak/控制流 -> exploit -> 本地验证 -> 授权远程验证”的顺序推进。
 
-## 专题文档强制路由
+## 专题文档强制路由（一定要进行这一步!!!）
 
-必须只读取和证据匹配的专题：
+必须只读取和证据匹配的专题,一定要遵循以下规则：
 
 - Stack overflow、ROP、ret2text、ret2shellcode、ret2syscall、ret2libc、ret2csu、ret2dlresolve、SROP、Canary：读取 `../../docs/PWN/stack-rop.md`。
 - Format string leak 或 `%n` 任意写：读取 `../../docs/PWN/format-string.md`。

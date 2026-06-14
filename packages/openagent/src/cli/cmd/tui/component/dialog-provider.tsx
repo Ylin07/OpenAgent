@@ -26,6 +26,10 @@ const PROVIDER_PRIORITY: Record<string, number> = {
 const CUSTOM_PROVIDER_OPTION_VALUE = "__openagent_custom_provider__"
 const CUSTOM_PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/
 
+const PROVIDER_API_METHOD: Record<string, string> = {
+  deepseek: "DeepSeek API key",
+}
+
 type ProviderOptionBase = {
   title: string
   value: string
@@ -140,7 +144,7 @@ export function createDialogProviderOptions() {
             const methods = sync.data.provider_auth[providerID] ?? [
               {
                 type: "api",
-                label: "API key",
+                label: PROVIDER_API_METHOD[providerID] ?? "API key",
               },
             ]
             let index: number | null = 0
@@ -377,6 +381,16 @@ function ApiMethod(props: ApiMethodProps) {
               </text>
               <text fg={theme.text}>
                 Go to <span style={{ fg: theme.primary }}>https://openagent.ai/go</span> and enable OpenAgent Go
+              </text>
+            </box>
+          ),
+          deepseek: (
+            <box gap={1}>
+              <text fg={theme.textMuted}>
+                Paste your DeepSeek API key here. It will be stored locally in OpenAgent auth storage.
+              </text>
+              <text fg={theme.text}>
+                Get a key from <span style={{ fg: theme.primary }}>https://platform.deepseek.com/api_keys</span>
               </text>
             </box>
           ),

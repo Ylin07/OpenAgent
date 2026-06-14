@@ -35,8 +35,9 @@ export const providerHandlers = HttpApiBuilder.group(InstanceHttpApi, "provider"
 
     const list = Effect.fn("ProviderHttpApi.list")(function* () {
       const connected = yield* provider.list()
+      const available = yield* provider.listAvailable()
       const providers = Object.fromEntries(
-        Object.entries(connected).map(([key, value]) => [key, Provider.toPublicInfo(value)]),
+        Object.entries({ ...available, ...connected }).map(([key, value]) => [key, Provider.toPublicInfo(value)]),
       )
       return {
         all: Object.values(providers),
